@@ -1,15 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
 import {
-    Plane,
     MapPin,
     Calendar,
     Users,
     Star,
     ArrowRight,
-    Search,
     Menu,
     X,
     Globe,
@@ -35,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ElegantShape } from "./elegant-shape";
 import { ImagesSlider } from "./images-slider";
-import type { Destination, TravelBookingLandingProps } from "@/types";
+import type { Destination, GuestCounts, TravelBookingLandingProps, TripData } from "@/types";
 
 const defaultDestinations: Destination[] = [
   {
@@ -95,10 +93,7 @@ export default function TravelBookingLanding({
     const { settings } = useSiteSettings();
     const t = useTranslations(settings.language);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedDestination, setSelectedDestination] = useState<string>("anywhere");
-    const [checkIn, setCheckIn] = useState("");
-    const [guests, setGuests] = useState({
+    const [guests, setGuests] = useState<GuestCounts>({
         adults: 2,
         kids: 0,
         babies: 0
@@ -141,49 +136,6 @@ export default function TravelBookingLanding({
         { code: "DXB", name: "Dubai International", city: "Dubai, UAE" }
     ];
 
-    // Tipo para destinos locales (diferente al tipo Destination de las props)
-    type LocalDestination = {
-        code: string;
-        name: string;
-        country: string;
-        type: string;
-    };
-
-    // Destinos para el campo To (todos los tipos de viaje)
-    const destinationsList: LocalDestination[] = [
-        { code: "PAR", name: "Paris", country: "France", type: "city" },
-        { code: "LON", name: "London", country: "UK", type: "city" },
-        { code: "ROM", name: "Rome", country: "Italy", type: "city" },
-        { code: "BCN", name: "Barcelona", country: "Spain", type: "city" },
-        { code: "AMS", name: "Amsterdam", country: "Netherlands", type: "city" },
-        { code: "BER", name: "Berlin", country: "Germany", type: "city" },
-        { code: "TOK", name: "Tokyo", country: "Japan", type: "city" },
-        { code: "BKK", name: "Bangkok", country: "Thailand", type: "city" },
-        { code: "SIN", name: "Singapore", country: "Singapore", type: "city" },
-        { code: "SEO", name: "Seoul", country: "South Korea", type: "city" },
-        { code: "HKG", name: "Hong Kong", country: "Hong Kong", type: "city" },
-        { code: "DUB", name: "Dubai", country: "UAE", type: "city" },
-        { code: "CUN", name: "Cancun", country: "Mexico", type: "resort" },
-        { code: "JAM", name: "Jamaica", country: "Jamaica", type: "island" },
-        { code: "BAH", name: "Bahamas", country: "Bahamas", type: "island" },
-        { code: "DR", name: "Dominican Republic", country: "Dominican Republic", type: "country" },
-        { code: "CUB", name: "Cuba", country: "Cuba", type: "country" },
-        { code: "RIO", name: "Rio de Janeiro", country: "Brazil", type: "city" },
-        { code: "BUE", name: "Buenos Aires", country: "Argentina", type: "city" },
-        { code: "LIM", name: "Lima", country: "Peru", type: "city" },
-        { code: "BOG", name: "Bogota", country: "Colombia", type: "city" },
-        { code: "SCL", name: "Santiago", country: "Chile", type: "city" },
-        { code: "NYC", name: "New York", country: "USA", type: "city" },
-        { code: "LAX", name: "Los Angeles", country: "USA", type: "city" },
-        { code: "CHI", name: "Chicago", country: "USA", type: "city" },
-        { code: "MIA", name: "Miami", country: "USA", type: "city" },
-        { code: "LV", name: "Las Vegas", country: "USA", type: "city" },
-        { code: "SF", name: "San Francisco", country: "USA", type: "city" },
-        { code: "TOR", name: "Toronto", country: "Canada", type: "city" },
-        { code: "VAN", name: "Vancouver", country: "Canada", type: "city" },
-        { code: "MTL", name: "Montreal", country: "Canada", type: "city" }
-    ];
-
     const countriesAndCities = {
         "Canada": ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"],
         "USA": ["New York", "Los Angeles", "Chicago", "Miami", "Las Vegas", "San Francisco"],
@@ -206,7 +158,6 @@ export default function TravelBookingLanding({
     const [isFromDropdownOpen, setIsFromDropdownOpen] = useState(false);
     const [selectedTripType, setSelectedTripType] = useState<string>("Flight + Hotel");
     const [selectedToCountry, setSelectedToCountry] = useState<string>("");
-    const [selectedToCity, setSelectedToCity] = useState<string>("");
     const [isToDropdownOpen, setIsToDropdownOpen] = useState(false);
     const toDropdownRef = useRef<HTMLDivElement>(null);
     const [toDropdownPosition, setToDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -215,7 +166,6 @@ export default function TravelBookingLanding({
     const [fromSearchText, setFromSearchText] = useState<string>("");
     const [toSearchText, setToSearchText] = useState<string>("");
     const [filteredAirports, setFilteredAirports] = useState(airports);
-    const [filteredDestinations, setFilteredDestinations] = useState<LocalDestination[]>(destinationsList);
     
     // Estado para habitaciones
     const [rooms, setRooms] = useState<number>(1);
@@ -243,19 +193,6 @@ export default function TravelBookingLanding({
     };
 
     // Función para filtrar destinos
-    const filterDestinations = (searchText: string) => {
-        if (searchText.length < 3) {
-            setFilteredDestinations([]);
-            return;
-        }
-        const filtered = destinationsList.filter(destination => 
-            destination.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            destination.country.toLowerCase().includes(searchText.toLowerCase()) ||
-            destination.code.toLowerCase().includes(searchText.toLowerCase())
-        );
-        setFilteredDestinations(filtered);
-    };
-
     // Función para manejar cambio en búsqueda From
     const handleFromSearchChange = (value: string) => {
         setFromSearchText(value);
@@ -270,12 +207,7 @@ export default function TravelBookingLanding({
     // Función para manejar cambio en búsqueda To
     const handleToSearchChange = (value: string) => {
         setToSearchText(value);
-        filterDestinations(value);
-        if (value.length >= 3) {
-            setIsToDropdownOpen(true);
-        } else {
-            setIsToDropdownOpen(false);
-        }
+        setIsToDropdownOpen(value.length >= 3);
     };
 
     const updateTravelers = (type: 'adults' | 'kids' | 'babies', delta: number) => {
@@ -465,7 +397,7 @@ export default function TravelBookingLanding({
         };
     }, [isFromDropdownOpen, isTravelerDropdownOpen, isTripTypeDropdownOpen, isToDropdownOpen]);
 
-    const fadeUpVariants = {
+    const fadeUpVariants: Variants = {
         hidden: { opacity: 0, y: 30 },
         visible: (i: number) => ({
             opacity: 1,
@@ -473,12 +405,12 @@ export default function TravelBookingLanding({
             transition: {
                 duration: 1,
                 delay: 0.5 + i * 0.2,
-                ease: [0.25, 0.4, 0.25, 1],
+                ease: [0.25, 0.4, 0.25, 1] as const,
             },
         }),
     };
 
-    const staggerContainer = {
+    const staggerContainer: Variants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
@@ -488,7 +420,7 @@ export default function TravelBookingLanding({
         },
     };
 
-    const itemFadeIn = {
+    const itemFadeIn: Variants = {
         hidden: { opacity: 0, y: 20 },
         visible: {
             opacity: 1,
@@ -843,7 +775,7 @@ export default function TravelBookingLanding({
                                     onClick={() => {
                                         if (activeTab === "surprise") {
                                             // Save traveler information to localStorage
-                                            const tripData = {
+                                            const tripData: TripData = {
                                                 tripType: "Flight + Hotel",
                                                 from: selectedCity && selectedCountry ? `${selectedCity}, ${selectedCountry}` : "",
                                                 travelers: totalTravelers,
@@ -976,11 +908,13 @@ export default function TravelBookingLanding({
                                 whileHover={{ y: -10, scale: 1.02 }}
                                 className="group relative overflow-hidden rounded-2xl bg-card shadow-lg hover:shadow-xl transition-all duration-300"
                             >
-                                <div className="aspect-[4/3] overflow-hidden">
-                                    <img
+                                <div className="aspect-[4/3] overflow-hidden relative">
+                                    <Image
                                         src={destination.image}
                                         alt={destination.name}
-                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                        fill
+                                        sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+                                        className="object-cover transition-transform duration-300 group-hover:scale-110"
                                     />
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -1333,7 +1267,7 @@ export default function TravelBookingLanding({
                                 <button
                                     key={destination}
                                     onClick={() => {
-                                        setSelectedToCity(destination);
+                                        setToSearchText(destination);
                                         setIsToDropdownOpen(false);
                                     }}
                                     className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-popover-foreground transition-colors"

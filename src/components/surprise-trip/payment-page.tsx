@@ -18,7 +18,6 @@ import {
     Users, 
     Check,
     ArrowLeft,
-    ArrowRight,
     Menu,
     X,
     CreditCard,
@@ -26,6 +25,25 @@ import {
     Shield,
     Star
 } from "lucide-react";
+import type {
+    PaymentState,
+    PersonalizationData,
+    SelectedDates,
+    SelectedTrip,
+    StoredSelectedDates,
+    TravelerData,
+    TripData
+} from "@/types";
+import type { TranslationKey } from "@/hooks/use-translations";
+
+type PaymentInputField = Exclude<keyof PaymentState, "travelers">;
+
+const travelerLabelKeys: TranslationKey[] = [
+    "payment.traveler1",
+    "payment.traveler2",
+    "payment.traveler3",
+    "payment.traveler4",
+];
 
 const staggerContainer = {
     hidden: { opacity: 0 },
@@ -45,15 +63,15 @@ const itemFadeIn = {
 export function PaymentPage() {
     const { settings } = useSiteSettings();
     const t = useTranslations(settings.language);
-    const { formatPrice, formatSeasonalPrice, convertCurrency } = useCurrencyConversion();
+    const { formatPrice, convertCurrency } = useCurrencyConversion();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [selectedTrip, setSelectedTrip] = useState<any>(null);
-    const [selectedDates, setSelectedDates] = useState<{start: Date | null, end: Date | null}>({start: null, end: null});
+    const [selectedTrip, setSelectedTrip] = useState<SelectedTrip | null>(null);
+    const [selectedDates, setSelectedDates] = useState<SelectedDates>({start: null, end: null});
     const [selectedDuration, setSelectedDuration] = useState<number>(2);
-    const [personalizationData, setPersonalizationData] = useState<any>(null);
-    const [tripData, setTripData] = useState<any>(null);
-    const [paymentData, setPaymentData] = useState({
+    const [personalizationData, setPersonalizationData] = useState<PersonalizationData | null>(null);
+    const [tripData, setTripData] = useState<TripData | null>(null);
+    const [paymentData, setPaymentData] = useState<PaymentState>({
         cardNumber: "",
         expiryDate: "",
         cvv: "",
@@ -61,7 +79,7 @@ export function PaymentPage() {
         email: "",
         phone: "",
         countryCode: "+1",
-        travelers: {} as {[key: string]: {firstName: string, lastName: string, passport: string}},
+        travelers: {},
         agreeTerms: false
     });
     const [paymentCompleted, setPaymentCompleted] = useState(false);
@@ -76,7 +94,7 @@ export function PaymentPage() {
         
         if (savedTrip) {
             try {
-                setSelectedTrip(JSON.parse(savedTrip));
+                setSelectedTrip(JSON.parse(savedTrip) as SelectedTrip);
             } catch (error) {
                 console.error('Error parsing saved trip data:', error);
             }
@@ -84,7 +102,7 @@ export function PaymentPage() {
         
         if (savedDates) {
             try {
-                const parsedDates = JSON.parse(savedDates);
+                const parsedDates = JSON.parse(savedDates) as StoredSelectedDates;
                 setSelectedDates({
                     start: parsedDates.start ? new Date(parsedDates.start) : null,
                     end: parsedDates.end ? new Date(parsedDates.end) : null
@@ -100,7 +118,7 @@ export function PaymentPage() {
 
         if (savedPersonalization) {
             try {
-                setPersonalizationData(JSON.parse(savedPersonalization));
+                setPersonalizationData(JSON.parse(savedPersonalization) as PersonalizationData);
             } catch (error) {
                 console.error('Error parsing personalization data:', error);
             }
@@ -108,7 +126,7 @@ export function PaymentPage() {
         
         if (savedTripData) {
             try {
-                setTripData(JSON.parse(savedTripData));
+                setTripData(JSON.parse(savedTripData) as TripData);
             } catch (error) {
                 console.error('Error parsing saved trip data:', error);
             }
@@ -163,14 +181,19 @@ export function PaymentPage() {
         }
     ];
 
-    const handleInputChange = (field: string, value: string | boolean) => {
+    const getTravelerLabel = (travelerNumber: number) => {
+        const labelKey = travelerLabelKeys[travelerNumber - 1];
+        return labelKey ? t(labelKey) : `Traveler ${travelerNumber}`;
+    };
+
+    const handleInputChange = <Field extends PaymentInputField>(field: Field, value: PaymentState[Field]) => {
         setPaymentData(prev => ({
             ...prev,
             [field]: value
         }));
     };
 
-    const handleTravelerChange = (travelerIndex: number, field: string, value: string) => {
+    const handleTravelerChange = (travelerIndex: number, field: keyof TravelerData, value: string) => {
         setPaymentData(prev => ({
             ...prev,
             travelers: {
@@ -222,7 +245,7 @@ export function PaymentPage() {
     const isFormValid = () => {
         const travelers = tripData ? tripData.travelers : 2;
         
-        let baseValidation = paymentData.cardNumber.length >= 19 && // 4 groups of 4 digits
+        const baseValidation = paymentData.cardNumber.length >= 19 && // 4 groups of 4 digits
                            paymentData.expiryDate.length === 5 && // MM/YY
                            paymentData.cvv.length >= 3 &&
                            paymentData.cardName.trim() !== "" &&
@@ -597,7 +620,7 @@ export function PaymentPage() {
                                     return (
                                         <div key={travelerNumber} className="border-t pt-4">
                                             <h4 className="font-semibold mb-4">
-                                                {t(`payment.traveler${travelerNumber}`)}
+                                                {getTravelerLabel(travelerNumber)}
                                             </h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>

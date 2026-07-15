@@ -559,11 +559,14 @@ export type TranslationKey = NestedKeyOf<typeof translations.en>;
 export function useTranslations(language: Language) {
     const t = useCallback((key: TranslationKey) => {
         const keys = key.split('.');
-        let translation: any = translations[language];
+        let translation: unknown = translations[language];
         for (const k of keys) {
-            translation = translation[k];
+            if (typeof translation !== "object" || translation === null || !(k in translation)) {
+                return key;
+            }
+            translation = (translation as Record<string, unknown>)[k];
         }
-        return translation || key;
+        return typeof translation === "string" ? translation : key;
     }, [language]);
 
     return t;

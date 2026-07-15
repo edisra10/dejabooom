@@ -23,6 +23,8 @@ import {
     ChevronRight
 } from "lucide-react";
 import Link from "next/link";
+import type { SelectedDates, SelectedTrip, TripData } from "@/types";
+import type { TranslationKey } from "@/hooks/use-translations";
 
 const staggerContainer = {
     hidden: {},
@@ -38,31 +40,52 @@ const itemFadeIn = {
     visible: { opacity: 1, y: 0 }
 };
 
+const durationOptions: Array<{ days: number; labelKey: TranslationKey }> = [
+    { days: 2, labelKey: "dates.days2" },
+    { days: 3, labelKey: "dates.days3" },
+    { days: 4, labelKey: "dates.days4" },
+    { days: 5, labelKey: "dates.days5" },
+];
+
+const weekdayKeys: TranslationKey[] = [
+    "dates.calendar.sun",
+    "dates.calendar.mon",
+    "dates.calendar.tue",
+    "dates.calendar.wed",
+    "dates.calendar.thu",
+    "dates.calendar.fri",
+    "dates.calendar.sat",
+];
+
 export function SurpriseTripDates() {
     const { settings } = useSiteSettings();
     const t = useTranslations(settings.language);
-    const { formatPrice, formatSeasonalPrice } = useCurrencyConversion();
+    const { formatSeasonalPrice } = useCurrencyConversion();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [selectedDates, setSelectedDates] = useState<{start: Date | null, end: Date | null}>({
+    const [selectedDates, setSelectedDates] = useState<SelectedDates>({
         start: null,
         end: null
     });
-    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [currentMonth, setCurrentMonth] = useState<Date | null>(null);
     const [selectedDuration, setSelectedDuration] = useState<number>(2); // Default to 2 nights
-    const [selectedTrip, setSelectedTrip] = useState<any>(null);
-    const [tripData, setTripData] = useState<any>(null);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    const [selectedTrip, setSelectedTrip] = useState<SelectedTrip | null>(null);
+    const [tripData, setTripData] = useState<TripData | null>(null);
+    const today = useMemo(() => {
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }, []);
 
     // Load selected trip data and trip data from localStorage
     useEffect(() => {
+        setCurrentMonth(new Date());
         const savedTrip = localStorage.getItem('selectedTrip');
         const savedTripData = localStorage.getItem('tripData');
         
         if (savedTrip) {
             try {
-                const tripData = JSON.parse(savedTrip);
+                const tripData = JSON.parse(savedTrip) as SelectedTrip;
                 setSelectedTrip(tripData);
             } catch (error) {
                 console.error('Error parsing saved trip data:', error);
@@ -90,7 +113,7 @@ export function SurpriseTripDates() {
         
         if (savedTripData) {
             try {
-                const parsedTripData = JSON.parse(savedTripData);
+                const parsedTripData = JSON.parse(savedTripData) as TripData;
                 setTripData(parsedTripData);
             } catch (error) {
                 console.error('Error parsing saved trip data:', error);
@@ -150,6 +173,10 @@ export function SurpriseTripDates() {
 
     // Generate calendar days for two months - recalculate when currentMonth changes
     const { firstMonth, secondMonth } = useMemo(() => {
+        if (!currentMonth) {
+            return { firstMonth: [], secondMonth: [] };
+        }
+
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         
@@ -240,11 +267,12 @@ export function SurpriseTripDates() {
 
     const navigateMonth = (direction: 'prev' | 'next') => {
         setCurrentMonth(prev => {
-            const newDate = new Date(prev);
+            const current = prev ?? new Date();
+            const newDate = new Date(current);
             if (direction === 'prev') {
-                newDate.setMonth(prev.getMonth() - 1);
+                newDate.setMonth(current.getMonth() - 1);
             } else {
-                newDate.setMonth(prev.getMonth() + 1);
+                newDate.setMonth(current.getMonth() + 1);
             }
             return newDate;
         });
@@ -256,11 +284,11 @@ export function SurpriseTripDates() {
         t("dates.calendar.september"), t("dates.calendar.october"), t("dates.calendar.november"), t("dates.calendar.december")
     ];
 
-    const nextMonth = currentMonth.getMonth() === 11 ? 0 : currentMonth.getMonth() + 1;
-    const nextYear = currentMonth.getMonth() === 11 ? currentMonth.getFullYear() + 1 : currentMonth.getFullYear();
+    const nextMonth = currentMonth?.getMonth() === 11 ? 0 : (currentMonth?.getMonth() ?? 0) + 1;
+    const nextYear = currentMonth?.getMonth() === 11 ? currentMonth.getFullYear() + 1 : (currentMonth?.getFullYear() ?? today.getFullYear());
 
     // Don't render until selectedTrip is loaded
-    if (!selectedTrip) {
+    if (!selectedTrip || !currentMonth) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center">
@@ -301,18 +329,18 @@ export function SurpriseTripDates() {
                     </motion.div>
                     
                     <nav className="hidden md:flex gap-6">
-                        <a href="/#destinations" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        <Link href="/#destinations" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("destinations")}
-                        </a>
-                        <a href="/#how-it-works" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        </Link>
+                        <Link href="/#how-it-works" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("howItWorks")}
-                        </a>
-                        <a href="/#about" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        </Link>
+                        <Link href="/#about" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("about")}
-                        </a>
-                        <a href="/#contact" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        </Link>
+                        <Link href="/#contact" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("contact")}
-                        </a>
+                        </Link>
                     </nav>
                     
                     <div className="hidden md:flex items-center gap-8">
@@ -339,10 +367,10 @@ export function SurpriseTripDates() {
             >
                 <div className="container py-4 space-y-4">
                     <nav className="flex flex-col space-y-3">
-                        <a href="/#destinations" className="text-sm font-medium">{t("destinations")}</a>
-                        <a href="/#how-it-works" className="text-sm font-medium">{t("howItWorks")}</a>
-                        <a href="/#about" className="text-sm font-medium">{t("about")}</a>
-                        <a href="/#contact" className="text-sm font-medium">{t("contact")}</a>
+                        <Link href="/#destinations" className="text-sm font-medium">{t("destinations")}</Link>
+                        <Link href="/#how-it-works" className="text-sm font-medium">{t("howItWorks")}</Link>
+                        <Link href="/#about" className="text-sm font-medium">{t("about")}</Link>
+                        <Link href="/#contact" className="text-sm font-medium">{t("contact")}</Link>
                     </nav>
                     <div className="flex flex-col gap-3">
                         <Button className="w-full bg-white text-[#051937] hover:bg-white/90">{t("signIn")}</Button>
@@ -404,12 +432,7 @@ export function SurpriseTripDates() {
                     <motion.div variants={itemFadeIn} className="max-w-2xl mx-auto mb-12">
                         <h3 className="text-lg font-semibold mb-4 text-center">{t("dates.duration")}</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {[
-                                { days: 2, key: "days2" },
-                                { days: 3, key: "days3" },
-                                { days: 4, key: "days4" },
-                                { days: 5, key: "days5" }
-                            ].map((option) => (
+                            {durationOptions.map((option) => (
                                 <Button
                                     key={option.days}
                                     variant={selectedDuration === option.days ? "default" : "outline"}
@@ -421,7 +444,7 @@ export function SurpriseTripDates() {
                                     onClick={() => setSelectedDuration(option.days)}
                                 >
                                     <div className="text-center">
-                                        <div className="font-semibold">{t(`dates.${option.key}`)}</div>
+                                        <div className="font-semibold">{t(option.labelKey)}</div>
                                     </div>
                                 </Button>
                             ))}
@@ -467,9 +490,9 @@ export function SurpriseTripDates() {
                                 
                                 {/* Calendar Grid */}
                                 <div className="grid grid-cols-7 gap-1 mb-2">
-                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                        <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
-                                            {t(`dates.calendar.${day.toLowerCase()}`)}
+                                    {weekdayKeys.map((dayKey) => (
+                                        <div key={dayKey} className="text-center text-xs font-medium text-muted-foreground py-1">
+                                            {t(dayKey)}
                                         </div>
                                     ))}
                                 </div>
@@ -482,7 +505,7 @@ export function SurpriseTripDates() {
 
                                         const isSelected = isDateSelected(day);
                                         const isInRange = isDateInRange(day);
-                                        const isToday = day.toDateString() === new Date().toDateString();
+                                        const isToday = day.toDateString() === today.toDateString();
                                         const isPast = isPastDate(day);
                                         const priceData = getPriceForDate(day, isSelected);
 
@@ -515,9 +538,9 @@ export function SurpriseTripDates() {
                                 
                                 {/* Calendar Grid */}
                                 <div className="grid grid-cols-7 gap-1 mb-2">
-                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                        <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
-                                            {t(`dates.calendar.${day.toLowerCase()}`)}
+                                    {weekdayKeys.map((dayKey) => (
+                                        <div key={dayKey} className="text-center text-xs font-medium text-muted-foreground py-1">
+                                            {t(dayKey)}
                                         </div>
                                     ))}
                                 </div>
@@ -530,7 +553,7 @@ export function SurpriseTripDates() {
 
                                         const isSelected = isDateSelected(day);
                                         const isInRange = isDateInRange(day);
-                                        const isToday = day.toDateString() === new Date().toDateString();
+                                        const isToday = day.toDateString() === today.toDateString();
                                         const isPast = isPastDate(day);
                                         const priceData = getPriceForDate(day, isSelected);
 

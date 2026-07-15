@@ -82,7 +82,7 @@ export function useCurrencyConversion() {
     };
 
     const formatPrice = (amountUSD: number): string => {
-        const { amount, symbol, code } = convertCurrency(amountUSD);
+        const { amount, symbol } = convertCurrency(amountUSD);
         return `${symbol}${amount.toLocaleString('en-US')}`;
     };
 

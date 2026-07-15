@@ -16,13 +16,6 @@ import { Button } from "@/components/ui/button";
 export type Language = "en" | "es";
 export type Currency = "USD" | "MXN";
 
-interface SettingsState {
-    language: Language;
-    currency: Currency;
-}
-
-
-
 export function SiteSettings() {
     const { theme, setTheme } = useTheme();
     const { settings, setSettings } = useSiteSettings();

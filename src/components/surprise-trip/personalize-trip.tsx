@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "@/hooks/use-translations";
 import { useSiteSettings } from "@/hooks/use-site-settings";
-import { useCurrencyConversion } from "@/hooks/use-currency-conversion";
 import { SiteSettings } from "@/components/site-settings";
 import { 
     MapPin, 
@@ -25,9 +24,17 @@ import {
     Mountain,
     Waves,
     Building,
-    TreePine,
-    Sparkles
+    TreePine
 } from "lucide-react";
+import type {
+    PersonalizationBudget,
+    PersonalizationData,
+    SelectedDates,
+    SelectedTrip,
+    StoredSelectedDates,
+    TravelStyle,
+    TripData
+} from "@/types";
 
 const staggerContainer = {
     hidden: { opacity: 0 },
@@ -44,21 +51,28 @@ const itemFadeIn = {
     visible: { opacity: 1, y: 0 }
 };
 
+const budgetOptions: PersonalizationBudget[] = ["low", "medium", "high"];
+
+const travelStyleOptions: Array<{ id: TravelStyle; label: string }> = [
+    { id: "relaxed", label: "Relaxed & Slow-paced" },
+    { id: "balanced", label: "Balanced" },
+    { id: "adventurous", label: "Adventurous & Fast-paced" }
+];
+
 export function PersonalizeTrip() {
     const { settings } = useSiteSettings();
     const t = useTranslations(settings.language);
-    const { formatPrice } = useCurrencyConversion();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [selectedTrip, setSelectedTrip] = useState<any>(null);
-    const [selectedDates, setSelectedDates] = useState<{start: Date | null, end: Date | null}>({start: null, end: null});
+    const [selectedTrip, setSelectedTrip] = useState<SelectedTrip | null>(null);
+    const [selectedDates, setSelectedDates] = useState<SelectedDates>({start: null, end: null});
     const [selectedDuration, setSelectedDuration] = useState<number>(2);
-    const [tripData, setTripData] = useState<any>(null);
-    const [personalizationData, setPersonalizationData] = useState({
-        interests: [] as string[],
+    const [tripData, setTripData] = useState<TripData | null>(null);
+    const [personalizationData, setPersonalizationData] = useState<PersonalizationData>({
+        interests: [],
         budget: "medium",
         accommodation: "hotel",
-        activities: [] as string[],
+        activities: [],
         travelStyle: "balanced",
         groupType: "couple"
     });
@@ -72,7 +86,7 @@ export function PersonalizeTrip() {
         
         if (savedTrip) {
             try {
-                setSelectedTrip(JSON.parse(savedTrip));
+                setSelectedTrip(JSON.parse(savedTrip) as SelectedTrip);
             } catch (error) {
                 console.error('Error parsing saved trip data:', error);
             }
@@ -80,7 +94,7 @@ export function PersonalizeTrip() {
         
         if (savedDates) {
             try {
-                const parsedDates = JSON.parse(savedDates);
+                const parsedDates = JSON.parse(savedDates) as StoredSelectedDates;
                 // Convert string dates back to Date objects
                 setSelectedDates({
                     start: parsedDates.start ? new Date(parsedDates.start) : null,
@@ -97,7 +111,7 @@ export function PersonalizeTrip() {
         
         if (savedTripData) {
             try {
-                setTripData(JSON.parse(savedTripData));
+                setTripData(JSON.parse(savedTripData) as TripData);
             } catch (error) {
                 console.error('Error parsing saved trip data:', error);
             }
@@ -431,7 +445,7 @@ export function PersonalizeTrip() {
                             <h3 className="text-xl font-bold mb-4">{t("personalize.budget")}</h3>
                             <p className="text-muted-foreground mb-6">{t("personalize.budgetDescription")}</p>
                             <div className="grid grid-cols-3 gap-3">
-                                {['low', 'medium', 'high'].map((budget) => (
+                                {budgetOptions.map((budget) => (
                                     <button
                                         key={budget}
                                         onClick={() => setPersonalizationData(prev => ({ ...prev, budget }))}
@@ -452,11 +466,7 @@ export function PersonalizeTrip() {
                             <h3 className="text-xl font-bold mb-4">{t("personalize.travelStyle")}</h3>
                             <p className="text-muted-foreground mb-6">{t("personalize.travelStyleDescription")}</p>
                             <div className="grid grid-cols-1 gap-3">
-                                {[
-                                    { id: "relaxed", label: "Relaxed & Slow-paced" },
-                                    { id: "balanced", label: "Balanced" },
-                                    { id: "adventurous", label: "Adventurous & Fast-paced" }
-                                ].map((style) => (
+                                {travelStyleOptions.map((style) => (
                                     <button
                                         key={style.id}
                                         onClick={() => setPersonalizationData(prev => ({ ...prev, travelStyle: style.id }))}

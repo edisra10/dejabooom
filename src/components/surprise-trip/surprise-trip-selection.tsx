@@ -15,12 +15,12 @@ import {
     Calendar, 
     Users, 
     Check,
-    ArrowLeft,
     ArrowRight,
     Menu,
     X
 } from "lucide-react";
 import Link from "next/link";
+import type { SelectedTrip, TripData } from "@/types";
 
 const staggerContainer = {
     hidden: {},
@@ -43,9 +43,9 @@ export function SurpriseTripSelection() {
 
     const [selectedTripType, setSelectedTripType] = useState<string>("");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [tripData, setTripData] = useState<any>(null);
+    const [tripData, setTripData] = useState<TripData | null>(null);
 
-    const tripTypes = [
+    const tripTypes: SelectedTrip[] = [
         {
             id: "canada",
             title: t("surpriseTrip.canada.title"),
@@ -88,7 +88,7 @@ export function SurpriseTripSelection() {
         
         // Only load tripData from step 1, not selectedTrip (that's for when user goes back)
         if (savedTripData) {
-            setTripData(JSON.parse(savedTripData));
+            setTripData(JSON.parse(savedTripData) as TripData);
         }
     }, []);
     
@@ -165,18 +165,18 @@ export function SurpriseTripSelection() {
                     </motion.div>
                     
                     <nav className="hidden md:flex gap-6">
-                        <a href="/#destinations" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        <Link href="/#destinations" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("destinations")}
-                        </a>
-                        <a href="/#how-it-works" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        </Link>
+                        <Link href="/#how-it-works" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("howItWorks")}
-                        </a>
-                        <a href="/#about" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        </Link>
+                        <Link href="/#about" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("about")}
-                        </a>
-                        <a href="/#contact" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
+                        </Link>
+                        <Link href="/#contact" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
                             {t("contact")}
-                        </a>
+                        </Link>
                     </nav>
                     
                     <div className="hidden md:flex items-center gap-8">
@@ -203,10 +203,10 @@ export function SurpriseTripSelection() {
             >
                 <div className="container py-4 space-y-4">
                     <nav className="flex flex-col space-y-3">
-                        <a href="/#destinations" className="text-sm font-medium">{t("destinations")}</a>
-                        <a href="/#how-it-works" className="text-sm font-medium">{t("howItWorks")}</a>
-                        <a href="/#about" className="text-sm font-medium">{t("about")}</a>
-                        <a href="/#contact" className="text-sm font-medium">{t("contact")}</a>
+                        <Link href="/#destinations" className="text-sm font-medium">{t("destinations")}</Link>
+                        <Link href="/#how-it-works" className="text-sm font-medium">{t("howItWorks")}</Link>
+                        <Link href="/#about" className="text-sm font-medium">{t("about")}</Link>
+                        <Link href="/#contact" className="text-sm font-medium">{t("contact")}</Link>
                     </nav>
                     <div className="flex flex-col gap-3">
                         <Button className="w-full bg-white text-[#051937] hover:bg-white/90">{t("signIn")}</Button>
@@ -273,7 +273,7 @@ export function SurpriseTripSelection() {
                     viewport={{ once: true }}
                     className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12"
                 >
-                    {tripTypes.map((trip, index) => (
+                    {tripTypes.map((trip) => (
                         <motion.div
                             key={trip.id}
                             variants={itemFadeIn}
