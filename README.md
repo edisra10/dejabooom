@@ -1,4 +1,48 @@
-# DejaBooom - Surprise Trip Booking Platform
+# Dejabooom
+
+Dejabooom is a Next.js surprise-trip booking experience. The current app includes a landing page, a multi-step surprise-trip flow, local language/currency preferences, seasonal date pricing, personalization, and a mock payment form.
+
+This repository does not include a database, AI service, authentication provider, or real payment integration yet.
+
+## Requirements
+
+- Node.js 20 or newer
+- npm 10 or newer
+
+The recommended Node version is declared in `.nvmrc`.
+
+## Setup
+
+```bash
+git clone https://github.com/edisra10/dejabooom.git
+cd dejabooom
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open http://localhost:3000 after the dev server starts.
+
+## Environment
+
+`NEXT_PUBLIC_SITE_URL` is used as the canonical metadata base URL.
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://dejabooom.com
+```
+
+## Validation
+
+Run these before opening a pull request:
+
+```bash
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+```
+
+GitHub Actions runs the same validation on pull requests and pushes to `main`.
 
 A modern, interactive travel booking platform that specializes in surprise trips. Built with Next.js, TypeScript, and Tailwind CSS.
 
@@ -16,7 +60,7 @@ A modern, interactive travel booking platform that specializes in surprise trips
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 15.5.3 with Turbopack
+- **Framework**: Next.js 15.5.3
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
@@ -73,14 +117,14 @@ src/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
+- Node.js 20+
+- npm 10+
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/dejabooom.git
+git clone https://github.com/edisra10/dejabooom.git
 cd dejabooom
 ```
 
@@ -130,6 +174,8 @@ Language switching is available in the navigation bar.
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run typecheck` - Run TypeScript without emitting files
+- `npm run check` - Run lint, typecheck, and production build
 
 ### Code Structure
 
