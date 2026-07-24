@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: Lint, typecheck, and build
+    name: Lint, typecheck, test, and build
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,9 @@ jobs:
 
       - name: TypeScript check
         run: npm run typecheck
+
+      - name: Tests
+        run: npm run test
 
       - name: Production build
         run: npm run build

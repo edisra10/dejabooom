@@ -1,8 +1,10 @@
-# Dejabooom
+﻿# Dejabooom
 
-Dejabooom is a Next.js surprise-trip booking experience. The current app includes a landing page, a multi-step surprise-trip flow, local language/currency preferences, seasonal date pricing, personalization, and a mock payment form.
+Dejabooom is a Next.js MVP for AI-personalized surprise trip planning.
 
-This repository does not include a database, AI service, authentication provider, or real payment integration yet.
+The product currently sells the planning experience, not travel inventory. Users create a trip profile with their dates, budget, preferences, restrictions, and surprise reveal style. Flights, hotels, and activities are booked directly with external providers.
+
+This repository does not include a database, OpenAI integration, authentication, payment processing, or reservation system yet.
 
 ## Requirements
 
@@ -31,6 +33,34 @@ Open http://localhost:3000 after the dev server starts.
 NEXT_PUBLIC_SITE_URL=https://dejabooom.com
 ```
 
+## Product Flow
+
+1. The landing page presents Surprise Trip as the only primary product.
+2. The primary CTA opens the trip profile questionnaire.
+3. The questionnaire collects departure details, destination scope, dates, duration, travelers, budget, interests, travel style, restrictions, and surprise level.
+4. Draft profile data is stored locally in an isolated storage layer.
+5. The final review screen summarizes the profile.
+6. `Generate My Surprise Match` opens a placeholder results page for the future recommendation engine.
+
+The questionnaire does not request or persist card details, CVV, passport numbers, or sensitive identity documents.
+
+## Project Structure
+
+```text
+src/
+  app/                         Next.js app router pages
+  components/landing/          Landing page visual components
+  components/ui/               Reusable UI primitives
+  features/trip-profile/
+    components/                Questionnaire steps and controls
+    constants/                 Options and step metadata
+    schemas/                   Zod validation
+    storage/                   Local draft persistence adapter
+    types/                     Shared TypeScript types
+  hooks/                       Shared React hooks
+  lib/                         Utility functions
+```
+
 ## Validation
 
 Run these before opening a pull request:
@@ -39,178 +69,20 @@ Run these before opening a pull request:
 npm ci
 npm run lint
 npm run typecheck
+npm run test
 npm run build
 ```
 
+`npm run check` runs lint, TypeScript, tests, and the production build in sequence.
+
 GitHub Actions runs the same validation on pull requests and pushes to `main`.
 
-A modern, interactive travel booking platform that specializes in surprise trips. Built with Next.js, TypeScript, and Tailwind CSS.
+## Available Scripts
 
-## 🚀 Features
-
-- **Surprise Trip Booking**: Complete booking flow for surprise travel experiences
-- **Multi-language Support**: English and Spanish translations
-- **Currency Conversion**: USD and MXN support with real-time conversion
-- **Dynamic Pricing**: Seasonal pricing with visual indicators
-- **Responsive Design**: Optimized for desktop and mobile devices
-- **Dark/Light Mode**: Theme switching capability
-- **Interactive Calendar**: Date selection with dynamic pricing
-- **Traveler Management**: Dynamic forms based on number of travelers
-- **Payment Integration Ready**: Prepared for Stripe integration
-
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 15.5.3
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **State Management**: React Hooks (useState, useEffect)
-- **Internationalization**: Custom translation system
-
-## 📁 Project Structure
-
-```
-src/
-├── app/                    # Next.js app router pages
-│   ├── surprise-trip/     # Surprise trip booking flow
-│   └── page.tsx           # Landing page
-├── components/            # React components
-│   ├── landing/           # Landing page components
-│   ├── surprise-trip/     # Booking flow components
-│   └── ui/               # Reusable UI components
-├── hooks/                # Custom React hooks
-├── types.ts              # TypeScript type definitions
-└── lib/                  # Utility functions
-```
-
-## 🎯 Booking Flow
-
-1. **Trip Setup**: Select trip type, departure city, and number of travelers
-2. **Surprise Selection**: Choose from Canada, USA, Mexico, or Caribbean surprises
-3. **Date Selection**: Interactive calendar with seasonal pricing
-4. **Personalization**: Customize interests and travel preferences
-5. **Payment**: Complete booking with traveler information
-
-## 🌟 Key Components
-
-### Landing Page
-- Hero section with animated shapes
-- Search form with tabbed interface (Surprise Trip / Classic Trip)
-- Dynamic traveler selector
-- Country and city dropdowns
-- "How it works" section
-
-### Surprise Trip Flow
-- **Selection Page**: Choose surprise destination with pricing
-- **Dates Page**: Calendar with seasonal pricing and duration selection
-- **Personalization Page**: Customize travel preferences
-- **Payment Page**: Complete booking with dynamic forms
-
-### Features
-- **Timeline Progress**: Step-by-step booking progress
-- **Currency Conversion**: Real-time USD/MXN conversion
-- **Seasonal Pricing**: Dynamic pricing with color-coded indicators
-- **Responsive Design**: Mobile-first approach
-- **Dark/Light Mode**: Theme switching
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 20+
-- npm 10+
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/edisra10/dejabooom.git
-cd dejabooom
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Run the development server:
-```bash
-npm run dev
-```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 🎨 Design Features
-
-- **Modern UI**: Clean, professional design with smooth animations
-- **Interactive Elements**: Hover effects, transitions, and micro-interactions
-- **Accessibility**: Proper contrast ratios and keyboard navigation
-- **Performance**: Optimized images and lazy loading
-
-## 🌍 Internationalization
-
-The platform supports multiple languages:
-- English (default)
-- Spanish
-
-Language switching is available in the navigation bar.
-
-## 💰 Currency Support
-
-- **USD**: Base currency
-- **MXN**: Mexican Peso with real-time conversion (rate: 17.5)
-
-## 📱 Responsive Design
-
-- **Desktop**: Full-featured experience with sidebar navigation
-- **Tablet**: Optimized layout for medium screens
-- **Mobile**: Touch-friendly interface with hamburger menu
-
-## 🔧 Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
+- `npm run dev` - Start the local Next.js development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run typecheck` - Run TypeScript without emitting files
-- `npm run check` - Run lint, typecheck, and production build
-
-### Code Structure
-
-- **Components**: Modular, reusable React components
-- **Hooks**: Custom hooks for state management and utilities
-- **Types**: Comprehensive TypeScript definitions
-- **Styling**: Utility-first CSS with Tailwind
-
-## 🚀 Deployment
-
-The project is ready for deployment on:
-- **Vercel** (recommended for Next.js)
-- **Netlify**
-- **AWS Amplify**
-- **Any Node.js hosting platform**
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Next.js team for the amazing framework
-- Tailwind CSS for the utility-first styling
-- Framer Motion for smooth animations
-- Lucide React for beautiful icons
-
----
-
-**DejaBooom** - Where surprise meets adventure! 🌟✈️
+- `npm run test` - Run Vitest unit tests
+- `npm run check` - Run all local validation commands

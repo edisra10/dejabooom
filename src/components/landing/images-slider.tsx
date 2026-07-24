@@ -121,15 +121,15 @@ export function ImagesSlider({
     return (
         <div
             className={cn(
-                "overflow-hidden h-full w-full relative flex items-center justify-center",
+                "overflow-hidden h-full w-full relative flex items-center justify-center bg-slate-950",
                 className
             )}
             style={{
                 perspective: "1000px",
             }}
         >
-            {areImagesLoaded && children}
-            {areImagesLoaded && overlay && (
+            {children}
+            {overlay && (
                 <div
                     className={cn("absolute inset-0 bg-black/60 z-40", overlayClassName)}
                 />

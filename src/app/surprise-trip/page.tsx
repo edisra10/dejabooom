@@ -1,5 +1,5 @@
-import { SurpriseTripSelection } from "@/components/surprise-trip/surprise-trip-selection";
+import { TripProfileQuestionnaire } from "@/features/trip-profile/components/trip-profile-questionnaire";
 
 export default function SurpriseTripPage() {
-    return <SurpriseTripSelection />;
+  return <TripProfileQuestionnaire />;
 }

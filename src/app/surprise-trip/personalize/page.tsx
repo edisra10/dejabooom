@@ -1,5 +1,5 @@
-import { PersonalizeTrip } from "@/components/surprise-trip/personalize-trip";
+import { redirect } from "next/navigation";
 
 export default function PersonalizeTripPage() {
-    return <PersonalizeTrip />;
+  redirect("/surprise-trip");
 }

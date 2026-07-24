@@ -1,5 +1,5 @@
-import { SurpriseTripDates } from "@/components/surprise-trip/surprise-trip-dates";
+import { redirect } from "next/navigation";
 
 export default function SurpriseTripDatesPage() {
-    return <SurpriseTripDates />;
+  redirect("/surprise-trip");
 }

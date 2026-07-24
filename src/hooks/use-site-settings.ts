@@ -1,5 +1,7 @@
 import { createContext, useContext } from 'react';
-import type { Language, Currency } from '@/components/site-settings';
+
+export type Language = "en" | "es";
+export type Currency = "USD" | "MXN";
 
 export interface SiteSettingsState {
     language: Language;

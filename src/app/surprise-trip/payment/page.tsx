@@ -1,5 +1,5 @@
-import { PaymentPage } from "@/components/surprise-trip/payment-page";
+import { redirect } from "next/navigation";
 
 export default function PaymentPageRoute() {
-    return <PaymentPage />;
+  redirect("/surprise-trip");
 }
