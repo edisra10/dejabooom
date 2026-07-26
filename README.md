@@ -2,63 +2,161 @@
 
 Dejabooom is a Next.js MVP for AI-personalized surprise trip planning.
 
-The product currently sells the planning experience, not travel inventory. Users create a trip profile with their dates, budget, preferences, restrictions, and surprise reveal style. Flights, hotels, and activities are booked directly with external providers.
-
-This repository does not include a database, OpenAI integration, authentication, payment processing, or reservation system yet.
+The product sells the planning experience, not travel inventory. Customers create
+a trip profile, choose a planning service, pay through hosted checkout, and
+receive a private AI-personalized surprise trip recommendation. Flights, hotels,
+activities, visas, and insurance are booked directly with third-party providers.
 
 ## Requirements
 
 - Node.js 20 or newer
 - npm 10 or newer
+- PostgreSQL, hosted with Supabase or Neon for shared environments
 
 The recommended Node version is declared in `.nvmrc`.
 
-## Setup
+## Quick Start
 
 ```bash
 git clone https://github.com/edisra10/dejabooom.git
 cd dejabooom
 npm install
 cp .env.example .env.local
+npm run db:generate
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
 Open http://localhost:3000 after the dev server starts.
 
-## Environment
+## Environment Variables
 
-`NEXT_PUBLIC_SITE_URL` is used as the canonical metadata base URL.
+Copy `.env.example` to `.env.local` and replace placeholder values.
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | Public app URL for metadata, checkout redirects, emails, and reveal links. |
+| `DATABASE_URL` | PostgreSQL connection string for Prisma. |
+| `OPENAI_API_KEY` | Server-side OpenAI API key. Never expose to the client. |
+| `OPENAI_RECOMMENDATION_MODEL` | Recommendation personalization model. Defaults to `gpt-5-mini`. |
+| `OPENAI_TIMEOUT_MS` | OpenAI request timeout in milliseconds. |
+| `STRIPE_SECRET_KEY` | Stripe server secret key for hosted checkout. |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret. |
+| `PLANNING_SERVICE_CURRENCY` | Currency used by planning-service products. |
+| `AI_SURPRISE_TRIP_NAME` | Display name for the first service tier. |
+| `AI_SURPRISE_TRIP_PRICE_CENTS` | Hosted checkout amount in cents for AI Surprise Trip. |
+| `CONCIERGE_SURPRISE_TRIP_NAME` | Display name for the concierge service tier. |
+| `CONCIERGE_SURPRISE_TRIP_PRICE_CENTS` | Hosted checkout amount in cents for Concierge Surprise Trip. |
+| `RESEND_API_KEY` | Resend API key for transactional email. |
+| `EMAIL_FROM` | Verified sender address for transactional email. |
+| `ADMIN_ALERT_EMAIL` | Operator email for generation-error alerts. |
+| `ADMIN_USERNAME` | Basic Auth username for `/admin`. |
+| `ADMIN_PASSWORD` | Basic Auth password for `/admin`. |
+| `REVEAL_TOKEN_ENCRYPTION_KEY` | 32-byte base64 key used to encrypt reveal tokens for admin recovery. |
+| `REVEAL_TOKEN_TTL_DAYS` | Optional reveal-link expiration window. |
+| `RECOMMENDATION_WEIGHTS_JSON` | Optional JSON override for deterministic scoring weights. |
+
+Generate a reveal-token encryption key with:
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://dejabooom.com
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
 ## Product Flow
 
-1. The landing page presents Surprise Trip as the only primary product.
-2. The primary CTA opens the trip profile questionnaire.
-3. The questionnaire collects departure details, destination scope, dates, duration, travelers, budget, interests, travel style, restrictions, and surprise level.
-4. Draft profile data is stored locally in an isolated storage layer.
-5. The final review screen summarizes the profile.
-6. `Generate My Surprise Match` opens a placeholder results page for the future recommendation engine.
+1. The landing page presents Dejabooom as a surprise travel-planning service.
+2. The customer completes the multi-step trip profile questionnaire.
+3. The questionnaire is validated with Zod and persisted to PostgreSQL.
+4. The deterministic server-side engine applies hard filters and scores the
+   curated destination catalog.
+5. The customer selects either `AI Surprise Trip` or `Concierge Surprise Trip`.
+6. Stripe creates a hosted checkout session. Dejabooom never captures raw card
+   details or CVV.
+7. Stripe webhooks are signature-validated and idempotent.
+8. Recommendation generation begins only after verified payment.
+9. OpenAI personalizes the selected destination with schema-validated structured
+   output.
+10. The customer receives a private `/reveal/[token]` link by email.
 
-The questionnaire does not request or persist card details, CVV, passport numbers, or sensitive identity documents.
+## Database
+
+Prisma is configured for PostgreSQL with Prisma 7.
+
+```bash
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+```
+
+Production deployments should run:
+
+```bash
+npm run db:deploy
+```
+
+The seed catalog contains approximate planning data for an initial
+Mexico-focused launch. It is not real-time pricing, visa, safety, or
+availability data.
+
+## Manual Provider Setup
+
+### Vercel
+
+- Set all environment variables from `.env.example`.
+- Use the production `NEXT_PUBLIC_SITE_URL`.
+- Run `npm run db:deploy` during deployment or through a controlled release step.
+- Confirm `/api/webhooks/stripe` is reachable from Stripe.
+
+### Database
+
+- Create a PostgreSQL database in Supabase or Neon.
+- Store the connection string in `DATABASE_URL`.
+- Apply migrations with `npm run db:deploy`.
+- Seed destinations with `npm run db:seed` once per environment.
+
+### OpenAI
+
+- Create an OpenAI API key and set `OPENAI_API_KEY` only on the server.
+- Keep `OPENAI_RECOMMENDATION_MODEL` configured to a structured-output capable
+  model.
+- Monitor generation failures in `/admin` and through `ADMIN_ALERT_EMAIL`.
+
+### Stripe
+
+- Create hosted checkout access with a Stripe secret key.
+- Configure the webhook endpoint: `/api/webhooks/stripe`.
+- Subscribe to `checkout.session.completed`,
+  `checkout.session.expired`, and `checkout.session.async_payment_failed`.
+- Copy the webhook signing secret to `STRIPE_WEBHOOK_SECRET`.
+- Keep planning-service prices in environment variables.
+
+### Resend
+
+- Verify the sender domain or address.
+- Set `RESEND_API_KEY` and `EMAIL_FROM`.
+- Set `ADMIN_ALERT_EMAIL` for generation-error notifications.
 
 ## Project Structure
 
 ```text
+prisma/
+  migrations/                  Database migration SQL
+  schema.prisma                Prisma schema
+  seed.ts                      Destination catalog seed
 src/
   app/                         Next.js app router pages
   components/landing/          Landing page visual components
   components/ui/               Reusable UI primitives
-  features/trip-profile/
-    components/                Questionnaire steps and controls
-    constants/                 Options and step metadata
-    schemas/                   Zod validation
-    storage/                   Local draft persistence adapter
-    types/                     Shared TypeScript types
-  hooks/                       Shared React hooks
-  lib/                         Utility functions
+  features/trip-profile/       Questionnaire components, schema, types, storage
+  server/
+    analytics/                 Server-side event logging without sensitive data
+    checkout/                  Planning-service product configuration
+    db/                        Prisma client
+    email/                     Transactional email service and templates
+    payments/                  Stripe helpers and webhook utilities
+    recommendations/           Scoring engine and OpenAI itinerary generation
+    security/                  Rate limiting and reveal-token helpers
 ```
 
 ## Validation
@@ -81,8 +179,30 @@ GitHub Actions runs the same validation on pull requests and pushes to `main`.
 
 - `npm run dev` - Start the local Next.js development server
 - `npm run build` - Build for production
-- `npm run start` - Start production server
+- `npm run start` - Start the production server
 - `npm run lint` - Run ESLint
 - `npm run typecheck` - Run TypeScript without emitting files
 - `npm run test` - Run Vitest unit tests
 - `npm run check` - Run all local validation commands
+- `npm run db:generate` - Generate Prisma Client
+- `npm run db:migrate` - Create/apply local development migrations
+- `npm run db:deploy` - Apply migrations in production
+- `npm run db:seed` - Seed the destination catalog
+
+## Security Notes
+
+- Raw card data and CVV are never requested or stored by Dejabooom.
+- Passport numbers and identity documents are never requested.
+- Reveal URLs use high-entropy tokens and store only token hashes by default.
+- Reveal token recovery in `/admin` requires `REVEAL_TOKEN_ENCRYPTION_KEY`.
+- `/admin` is protected by Basic Auth through middleware.
+- OpenAI calls run server-side and validate structured output with Zod.
+
+## Known Limitations
+
+- No customer account system yet.
+- No direct flight, hotel, or activity booking.
+- No real-time pricing or availability.
+- Destination data is curated and approximate.
+- Generation currently runs inside the webhook request instead of a durable queue.
+- Legal pages are draft text and require professional legal review before launch.
