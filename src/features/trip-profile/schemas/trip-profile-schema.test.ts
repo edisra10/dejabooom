@@ -8,6 +8,7 @@ import type { TripProfileDraft } from "../types";
 
 const validDraft: TripProfileDraft = {
   ...DEFAULT_TRIP_PROFILE_DRAFT,
+  contactEmail: "traveler@example.com",
   departureCity: "Mexico City",
   departureAirport: "MEX",
   approximateStartDate: "2026-10-10",
@@ -29,6 +30,7 @@ describe("trip profile validation", () => {
     );
 
     expect(result.success).toBe(false);
+    expect(result.errors.contactEmail).toBe("Enter a valid email address.");
     expect(result.errors.departureCity).toBe("Enter your departure city.");
     expect(result.errors.departureAirport).toBe(
       "Enter your preferred departure airport.",

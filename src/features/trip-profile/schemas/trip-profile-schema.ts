@@ -24,6 +24,7 @@ const shortTextSchema = z.string().trim().max(160, "Keep this under 160 characte
 const notesSchema = z.string().trim().max(700, "Keep this under 700 characters.");
 
 const travelBasicsShape = {
+  contactEmail: z.email("Enter a valid email address."),
   departureCity: z
     .string()
     .trim()
@@ -104,6 +105,7 @@ const surpriseStyleShape = {
 };
 
 export const DEFAULT_TRIP_PROFILE_DRAFT: TripProfileDraft = {
+  contactEmail: "",
   departureCity: "",
   departureAirport: "",
   destinationScope: "open_to_anything",
@@ -195,6 +197,7 @@ export const tripProfileSchema = z
 export const persistedTripProfileDraftSchema = z
   .object({
     departureCity: z.string(),
+    contactEmail: z.string(),
     departureAirport: z.string(),
     destinationScope: z.enum(destinationScopeValues),
     approximateStartDate: z.string(),
@@ -298,7 +301,7 @@ export function validateTripProfileStep(
 }
 
 export function validateTripProfile(
-  draft: TripProfileDraft,
+  draft: unknown,
 ): TripProfileValidationResult {
   const result = tripProfileSchema.safeParse(draft);
 

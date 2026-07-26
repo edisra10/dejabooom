@@ -63,6 +63,7 @@ export function ReviewStep({ draft }: ReviewStepProps) {
   return (
     <div className="space-y-5">
       <ReviewSection title="Trip frame">
+        <ReviewItem label="Contact email" value={draft.contactEmail} />
         <ReviewItem label="Departure city" value={draft.departureCity} />
         <ReviewItem label="Departure airport" value={draft.departureAirport} />
         <ReviewItem

@@ -33,6 +33,7 @@ export type SurpriseLevel =
   | "show_three_finalists";
 
 export interface TripProfileDraft {
+  contactEmail: string;
   departureCity: string;
   departureAirport: string;
   destinationScope: DestinationScope;

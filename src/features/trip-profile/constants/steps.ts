@@ -45,7 +45,12 @@ export const tripProfileSteps: TripProfileStep[] = [
 ];
 
 export const tripProfileStepFields: Record<TripProfileStepId, TripProfileField[]> = {
-  "travel-basics": ["departureCity", "departureAirport", "destinationScope"],
+  "travel-basics": [
+    "contactEmail",
+    "departureCity",
+    "departureAirport",
+    "destinationScope",
+  ],
   "dates-travelers": [
     "approximateStartDate",
     "approximateEndDate",
