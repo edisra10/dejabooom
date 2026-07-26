@@ -45,11 +45,13 @@ const processSteps = [
   },
   {
     title: "Get matched",
-    description: "Your profile becomes the input for personalized destination matching.",
+    description:
+      "After hosted checkout, deterministic scoring selects from a curated catalog.",
   },
   {
     title: "Enjoy the reveal",
-    description: "Receive recommendations, itinerary direction, and a surprise reveal format.",
+    description:
+      "Receive your private AI-personalized recommendation and surprise reveal link.",
   },
 ];
 
@@ -140,12 +142,13 @@ export default function AiTripLanding() {
               Planning first
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              A surprise trip profile, not a checkout page.
+              A planning service, not a booking platform.
             </h2>
             <p className="mt-4 leading-7 text-slate-600">
               Dejabooom helps shape where you should go and what the trip could
-              feel like. Flights, stays, and activities are booked directly with
-              external providers.
+              feel like. You pay for matching, personalization, itinerary
+              direction, and the reveal; flights, stays, and activities are
+              booked directly with external providers.
             </p>
           </div>
 
@@ -180,7 +183,8 @@ export default function AiTripLanding() {
             </h2>
             <p className="mt-4 leading-7 text-slate-600">
               The questionnaire gathers the practical details and taste signals
-              needed to recommend a destination and reveal style in a later phase.
+              needed to score curated destinations and personalize the private
+              reveal after payment is verified.
             </p>
           </div>
 
@@ -224,6 +228,29 @@ export default function AiTripLanding() {
           </Button>
         </div>
       </section>
+
+      <footer className="border-t border-slate-200 px-4 py-8 text-sm text-slate-500 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p>Dejabooom provides planning guidance, not travel reservations.</p>
+          <nav className="flex flex-wrap gap-4">
+            <Link href="/legal/terms" className="hover:text-slate-950">
+              Terms
+            </Link>
+            <Link href="/legal/privacy" className="hover:text-slate-950">
+              Privacy
+            </Link>
+            <Link href="/legal/refunds" className="hover:text-slate-950">
+              Refunds
+            </Link>
+            <Link
+              href="/legal/ai-travel-disclaimer"
+              className="hover:text-slate-950"
+            >
+              AI disclaimer
+            </Link>
+          </nav>
+        </div>
+      </footer>
     </main>
   );
 }

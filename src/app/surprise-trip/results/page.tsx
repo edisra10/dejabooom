@@ -11,13 +11,12 @@ export default function SurpriseTripResultsPlaceholderPage() {
           Surprise match
         </p>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Your profile is ready for matching.
+          Surprise results are now delivered privately.
         </h1>
         <p className="mt-4 leading-7 text-slate-600">
-          The recommendation engine will be added in the next phase. For now,
-          Dejabooom has saved the locally drafted trip profile so the MVP can
-          validate the questionnaire flow without taking payments or booking
-          travel.
+          Complete the questionnaire, choose a planning service, and finish
+          hosted checkout. Dejabooom generates the recommendation only after the
+          payment webhook verifies the order, then sends a private reveal link.
         </p>
         <div className="mt-8">
           <Button asChild variant="outline">
