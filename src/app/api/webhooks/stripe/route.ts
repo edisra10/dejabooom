@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { trackServerEvent } from "@/server/analytics/events";
 import { prisma } from "@/server/db/prisma";
@@ -12,7 +12,10 @@ import {
   isStripeCheckoutSession,
 } from "@/server/payments/webhook-events";
 import { getStripeClient, getStripeWebhookSecret } from "@/server/payments/stripe";
-import { generateRecommendationForOrder } from "@/server/recommendations/generate-recommendation";
+import {
+  enqueueRecommendationJob,
+  processRecommendationJobs,
+} from "@/server/recommendations/recommendation-jobs";
 
 export const runtime = "nodejs";
 
@@ -72,6 +75,8 @@ async function handleCheckoutCompleted(
     },
   });
 
+  await enqueueRecommendationJob(order.id);
+
   await sendPaymentConfirmation(order.tripProfile.contactEmail, order.id);
   trackServerEvent("checkout_payment_verified", {
     orderId: order.id,
@@ -79,22 +84,16 @@ async function handleCheckoutCompleted(
     serviceTier: order.serviceTier,
     amountCents: order.amountCents,
   });
-  trackServerEvent("recommendation_generation_started", {
-    orderId: order.id,
-    tripProfileId: order.tripProfileId,
+  after(async () => {
+    try {
+      await processRecommendationJobs({ limit: 1 });
+    } catch (error) {
+      logger.error("Background recommendation processing failed.", {
+        orderId: order.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   });
-
-  const recommendation = await generateRecommendationForOrder(order.id);
-
-  trackServerEvent(
-    recommendation
-      ? "recommendation_generation_completed"
-      : "recommendation_generation_failed",
-    {
-      orderId: order.id,
-      recommendationId: recommendation?.id,
-    },
-  );
 
   await prisma.paymentEvent.update({
     where: { id: paymentEventId },

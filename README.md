@@ -55,6 +55,8 @@ Copy `.env.example` to `.env.local` and replace placeholder values.
 | `ADMIN_PASSWORD` | Basic Auth password for `/admin`. |
 | `REVEAL_TOKEN_ENCRYPTION_KEY` | 32-byte base64 key used to encrypt reveal tokens for admin recovery. |
 | `REVEAL_TOKEN_TTL_DAYS` | Optional reveal-link expiration window. |
+| `CRON_SECRET` | Bearer token protecting the durable recommendation worker endpoint. |
+| `RECOMMENDATION_JOB_BATCH_SIZE` | Number of queued recommendations processed per worker invocation, capped at five. |
 | `RECOMMENDATION_WEIGHTS_JSON` | Optional JSON override for deterministic scoring weights. |
 
 Generate a reveal-token encryption key with:
@@ -74,7 +76,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 6. Stripe creates a hosted checkout session. Dejabooom never captures raw card
    details or CVV.
 7. Stripe webhooks are signature-validated and idempotent.
-8. Recommendation generation begins only after verified payment.
+8. Verified payments enqueue a durable PostgreSQL recommendation job.
 9. OpenAI personalizes the selected destination with schema-validated structured
    output.
 10. The customer receives a private `/reveal/[token]` link by email.
@@ -107,6 +109,8 @@ availability data.
 - Use the production `NEXT_PUBLIC_SITE_URL`.
 - Run `npm run db:deploy` during deployment or through a controlled release step.
 - Confirm `/api/webhooks/stripe` is reachable from Stripe.
+- Configure `CRON_SECRET` and invoke `/api/internal/recommendations/process`
+  from a trusted scheduler to retry queued work.
 
 ### Database
 
@@ -130,6 +134,19 @@ availability data.
   `checkout.session.expired`, and `checkout.session.async_payment_failed`.
 - Copy the webhook signing secret to `STRIPE_WEBHOOK_SECRET`.
 - Keep planning-service prices in environment variables.
+
+### Recommendation worker
+
+- Stripe webhooks only verify payment and enqueue the recommendation job.
+- Next.js `after()` attempts immediate processing without delaying the webhook
+  response. The PostgreSQL job remains available if that attempt is interrupted.
+- Call `GET /api/internal/recommendations/process` with
+  `Authorization: Bearer <CRON_SECRET>` to process retries.
+- Vercel Pro can schedule this endpoint every minute. Vercel Hobby permits only
+  daily cron execution, so staging on Hobby should use a trusted external
+  scheduler or manual invocation.
+- Failed jobs retry up to three times with exponential backoff. Stale processing
+  locks are released automatically.
 
 ### Resend
 
@@ -183,6 +200,7 @@ GitHub Actions runs the same validation on pull requests and pushes to `main`.
 - `npm run lint` - Run ESLint
 - `npm run typecheck` - Run TypeScript without emitting files
 - `npm run test` - Run Vitest unit tests
+- `npm run audit:prod` - Fail on high or critical production dependency alerts
 - `npm run check` - Run all local validation commands
 - `npm run db:generate` - Generate Prisma Client
 - `npm run db:migrate` - Create/apply local development migrations
@@ -197,6 +215,8 @@ GitHub Actions runs the same validation on pull requests and pushes to `main`.
 - Reveal token recovery in `/admin` requires `REVEAL_TOKEN_ENCRYPTION_KEY`.
 - `/admin` is protected by Basic Auth through middleware.
 - OpenAI calls run server-side and validate structured output with Zod.
+- Checkout and questionnaire rate limits are shared through PostgreSQL rather
+  than isolated in each server process.
 
 ## Known Limitations
 
@@ -204,5 +224,4 @@ GitHub Actions runs the same validation on pull requests and pushes to `main`.
 - No direct flight, hotel, or activity booking.
 - No real-time pricing or availability.
 - Destination data is curated and approximate.
-- Generation currently runs inside the webhook request instead of a durable queue.
 - Legal pages are draft text and require professional legal review before launch.

@@ -15,7 +15,7 @@ import { validateTripProfile } from "@/features/trip-profile/schemas/trip-profil
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit({
+  const rateLimit = await checkRateLimit({
     key: `trip-profile:${getRequestIp(request)}`,
     limit: 8,
     windowMs: 60_000,

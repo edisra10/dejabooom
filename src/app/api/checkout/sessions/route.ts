@@ -20,7 +20,7 @@ const checkoutRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit({
+  const rateLimit = await checkRateLimit({
     key: `checkout:${getRequestIp(request)}`,
     limit: 10,
     windowMs: 60_000,

@@ -1,11 +1,5 @@
 import { NextResponse } from "next/server";
-
-interface RateLimitBucket {
-  count: number;
-  resetAt: number;
-}
-
-const buckets = new Map<string, RateLimitBucket>();
+import { prisma } from "@/server/db/prisma";
 
 export interface RateLimitOptions {
   key: string;
@@ -13,36 +7,38 @@ export interface RateLimitOptions {
   windowMs: number;
 }
 
-export function checkRateLimit({ key, limit, windowMs }: RateLimitOptions) {
-  const now = Date.now();
-  const bucket = buckets.get(key);
+interface RateLimitRow {
+  count: number;
+  resetAt: Date;
+}
 
-  if (!bucket || bucket.resetAt <= now) {
-    buckets.set(key, {
-      count: 1,
-      resetAt: now + windowMs,
-    });
+export async function checkRateLimit({ key, limit, windowMs }: RateLimitOptions) {
+  const now = new Date();
+  const nextResetAt = new Date(now.getTime() + windowMs);
+  const [bucket] = await prisma.$queryRaw<RateLimitRow[]>`
+    INSERT INTO "RateLimitBucket" ("key", "count", "resetAt", "updatedAt")
+    VALUES (${key}, 1, ${nextResetAt}, NOW())
+    ON CONFLICT ("key") DO UPDATE SET
+      "count" = CASE
+        WHEN "RateLimitBucket"."resetAt" <= NOW() THEN 1
+        ELSE "RateLimitBucket"."count" + 1
+      END,
+      "resetAt" = CASE
+        WHEN "RateLimitBucket"."resetAt" <= NOW() THEN ${nextResetAt}
+        ELSE "RateLimitBucket"."resetAt"
+      END,
+      "updatedAt" = NOW()
+    RETURNING "count", "resetAt"
+  `;
 
-    return {
-      allowed: true,
-      remaining: limit - 1,
-      resetAt: now + windowMs,
-    };
+  if (!bucket) {
+    throw new Error("Rate limit bucket could not be persisted.");
   }
 
-  if (bucket.count >= limit) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: bucket.resetAt,
-    };
-  }
-
-  bucket.count += 1;
   return {
-    allowed: true,
-    remaining: limit - bucket.count,
-    resetAt: bucket.resetAt,
+    allowed: bucket.count <= limit,
+    remaining: Math.max(0, limit - bucket.count),
+    resetAt: bucket.resetAt.getTime(),
   };
 }
 
@@ -64,4 +60,3 @@ export function rateLimitResponse(resetAt: number) {
     },
   );
 }
-
