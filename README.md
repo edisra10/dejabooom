@@ -9,8 +9,8 @@ activities, visas, and insurance are booked directly with third-party providers.
 
 ## Requirements
 
-- Node.js 20 or newer
-- npm 10 or newer
+- Node.js 22 or newer
+- npm 11.6.2 or newer
 - PostgreSQL, hosted with Supabase or Neon for shared environments
 
 The recommended Node version is declared in `.nvmrc`.

@@ -2,9 +2,10 @@
   "name": "dejabooom",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.6.2",
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": ">=22.0.0",
+    "npm": ">=11.6.2"
   },
   "scripts": {
     "dev": "next dev --turbopack",
@@ -54,7 +55,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
