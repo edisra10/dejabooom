@@ -28,6 +28,7 @@ class MemoryStorage implements TripProfileDraftStorageAdapter {
 
 const validDraft: TripProfileDraft = {
   ...DEFAULT_TRIP_PROFILE_DRAFT,
+  contactEmail: "traveler@example.com",
   departureCity: "Guadalajara",
   departureAirport: "GDL",
   approximateStartDate: "2026-11-05",

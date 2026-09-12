@@ -53,6 +53,8 @@ export function TripProfileQuestionnaire() {
   const [currentStepId, setCurrentStepId] =
     useState<TripProfileStepId>(firstStepId);
   const [errors, setErrors] = useState<TripProfileErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
 
   useEffect(() => {
@@ -118,7 +120,7 @@ export function TripProfileQuestionnaire() {
     setCurrentStepId((stepId) => getPreviousTripProfileStepId(stepId));
   };
 
-  const completeQuestionnaire = () => {
+  const completeQuestionnaire = async () => {
     const validation = validateTripProfile(draft);
 
     if (!validation.success) {
@@ -126,13 +128,46 @@ export function TripProfileQuestionnaire() {
       return;
     }
 
-    saveTripProfileDraft(validation.data);
-    router.push("/surprise-trip/results");
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const response = await fetch("/api/trip-profiles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(validation.data),
+      });
+      const payload = (await response.json()) as {
+        checkoutPath?: string;
+        errors?: TripProfileErrors;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        if (payload.errors) {
+          setErrors(payload.errors);
+        }
+
+        setSubmitError(
+          payload.error ?? "We could not save your trip profile. Please try again.",
+        );
+        return;
+      }
+
+      clearTripProfileDraft();
+      router.push(payload.checkoutPath ?? "/surprise-trip/results");
+    } catch {
+      setSubmitError("We could not save your trip profile. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const goToNextStep = () => {
+  const goToNextStep = async () => {
     if (isFinalTripProfileStep(currentStepId)) {
-      completeQuestionnaire();
+      await completeQuestionnaire();
       return;
     }
 
@@ -260,6 +295,15 @@ export function TripProfileQuestionnaire() {
               </div>
             ) : null}
 
+            {submitError ? (
+              <div
+                role="alert"
+                className="mx-5 mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:mx-6"
+              >
+                {submitError}
+              </div>
+            ) : null}
+
             <div className="p-5 sm:p-6">
               {currentStepId === "travel-basics" ? (
                 <TravelBasicsStep {...stepProps} />
@@ -301,9 +345,15 @@ export function TripProfileQuestionnaire() {
                   <ArrowLeft className="size-4" />
                   Back
                 </Button>
-                <Button type="submit" className="bg-slate-950 text-white">
+                <Button
+                  type="submit"
+                  className="bg-slate-950 text-white"
+                  disabled={isSubmitting}
+                >
                   {isFinalTripProfileStep(currentStepId)
-                    ? "Generate My Surprise Match"
+                    ? isSubmitting
+                      ? "Saving Profile"
+                      : "Generate My Surprise Match"
                     : "Continue"}
                   {!isFinalTripProfileStep(currentStepId) ? (
                     <ArrowRight className="size-4" />

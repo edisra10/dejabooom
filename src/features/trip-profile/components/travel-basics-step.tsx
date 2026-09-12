@@ -13,6 +13,16 @@ export function TravelBasicsStep({
 }: TripProfileStepComponentProps) {
   return (
     <div className="space-y-6">
+      <TextField
+        id="contactEmail"
+        label="Contact email"
+        value={draft.contactEmail}
+        error={errors.contactEmail}
+        placeholder="you@example.com"
+        autoComplete="email"
+        onChange={(value) => updateField("contactEmail", value)}
+      />
+
       <div className="grid gap-4 md:grid-cols-2">
         <TextField
           id="departureCity"

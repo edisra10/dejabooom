@@ -45,7 +45,6 @@ export const surpriseLevelValues = [
   "full_surprise",
   "reveal_country",
   "reveal_region",
-  "show_three_finalists",
 ] as const;
 
 export const destinationScopeOptions: TripProfileOption<DestinationScope>[] = [
@@ -136,11 +135,6 @@ export const surpriseLevelOptionsList: TripProfileOption<SurpriseLevel>[] = [
     value: "reveal_region",
     label: "Reveal region only",
     description: "Give a broad regional hint before the final reveal.",
-  },
-  {
-    value: "show_three_finalists",
-    label: "Show three finalists",
-    description: "Compare three strong matches before choosing one.",
   },
 ];
 

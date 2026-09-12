@@ -16,7 +16,7 @@ export function SurpriseStyleStep({
       value={draft.surpriseLevel}
       options={surpriseLevelOptionsList}
       error={errors.surpriseLevel}
-      columns="four"
+      columns="three"
       onChange={(value) => updateField("surpriseLevel", value)}
     />
   );

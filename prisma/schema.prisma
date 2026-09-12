@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DestinationScope {
+  MEXICO
+  NORTH_AMERICA
+  INTERNATIONAL
+  OPEN_TO_ANYTHING
+}
+
+enum PreferredCurrency {
+  USD
+  MXN
+  EUR
+}
+
+enum PreferredClimate {
+  WARM
+  MILD
+  COOL
+  VARIED
+  NO_PREFERENCE
+}
+
+enum TravelPace {
+  SLOW
+  BALANCED
+  PACKED
+}
+
+enum AccommodationPreference {
+  BOUTIQUE
+  COMFORT
+  LUXURY
+  LOCAL_STAY
+  FLEXIBLE
+}
+
+enum PreferenceLevel {
+  LOW
+  MODERATE
+  HIGH
+}
+
+enum PassportAvailability {
+  YES
+  NO
+  NOT_SURE
+}
+
+enum SurpriseLevel {
+  FULL_SURPRISE
+  REVEAL_COUNTRY
+  REVEAL_REGION
+  SHOW_THREE_FINALISTS
+}
+
+enum BudgetTier {
+  LOW
+  MID
+  HIGH
+  LUXURY
+}
+
+enum ServiceTier {
+  AI_SURPRISE_TRIP
+  CONCIERGE_SURPRISE_TRIP
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+}
+
+enum RecommendationStatus {
+  PENDING
+  GENERATING
+  GENERATED
+  FAILED
+}
+
+enum RecommendationJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model TravelerGroup {
+  id             String        @id @default(cuid())
+  travelerCount  Int
+  adultTravelers Int
+  childTravelers Int
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  tripProfiles   TripProfile[]
+}
+
+model TripProfile {
+  id                         String                   @id @default(cuid())
+  contactEmail               String
+  departureCity              String
+  departureAirport           String
+  destinationScope           DestinationScope
+  approximateStartDate       DateTime
+  approximateEndDate         DateTime
+  flexibleDateRange          Boolean
+  tripDurationDays           Int
+  totalBudget                Int
+  preferredCurrency          PreferredCurrency
+  interests                  String[]
+  preferredClimate           PreferredClimate
+  travelPace                 TravelPace
+  accommodationPreference    AccommodationPreference
+  foodInterests              String[]
+  nightlifePreference        PreferenceLevel
+  naturePreference           PreferenceLevel
+  culturalPreference         PreferenceLevel
+  beachPreference            PreferenceLevel
+  adventurePreference        PreferenceLevel
+  destinationsVisited        String
+  excludedDestinations       String
+  maximumFlightDurationHours Int
+  hasPassport                PassportAvailability
+  visaRestrictions           String
+  accessibilityRequirements  String
+  dietaryRestrictions        String
+  surpriseLevel              SurpriseLevel
+  questionnaireVersion       Int                      @default(2)
+  source                     String                   @default("web_questionnaire")
+  travelerGroupId            String
+  travelerGroup              TravelerGroup            @relation(fields: [travelerGroupId], references: [id], onDelete: Cascade)
+  destinationScores          DestinationScore[]
+  recommendations            Recommendation[]
+  orders                     Order[]
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+
+  @@index([contactEmail])
+  @@index([createdAt])
+}
+
+model Destination {
+  id                         String                 @id @default(cuid())
+  slug                       String                 @unique
+  country                    String
+  city                       String
+  region                     String
+  isDomestic                 Boolean
+  destinationScope           DestinationScope
+  budgetTier                 BudgetTier
+  minFlightDurationHours     Int
+  maxFlightDurationHours     Int
+  climate                    PreferredClimate
+  idealDurationMinDays       Int
+  idealDurationMaxDays       Int
+  interests                  String[]
+  preferredSeasons           String[]
+  visaConsiderations         String
+  restrictedConditions       String[]
+  externalBookingSearchLabel String
+  approximateDataNote        String
+  active                     Boolean                @default(true)
+  attributes                 DestinationAttribute?
+  destinationScores          DestinationScore[]
+  recommendations            Recommendation[]
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+
+  @@index([country, city])
+  @@index([destinationScope])
+  @@index([budgetTier])
+  @@index([active])
+}
+
+model DestinationAttribute {
+  id              String      @id @default(cuid())
+  destinationId   String      @unique
+  destination     Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  beachScore      Int
+  cultureScore    Int
+  foodScore       Int
+  nightlifeScore  Int
+  natureScore     Int
+  romanceScore    Int
+  adventureScore  Int
+  relaxationScore Int
+  logisticsScore  Int
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model DestinationScore {
+  id                String      @id @default(cuid())
+  tripProfileId     String
+  destinationId     String
+  totalScore        Float
+  breakdown         Json
+  hardFilterReasons String[]
+  passedHardFilters Boolean
+  tripProfile       TripProfile @relation(fields: [tripProfileId], references: [id], onDelete: Cascade)
+  destination       Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([tripProfileId, destinationId])
+  @@index([tripProfileId, totalScore])
+}
+
+model Recommendation {
+  id                String                @id @default(cuid())
+  tripProfileId     String
+  orderId           String?               @unique
+  selectedDestinationId String?
+  status            RecommendationStatus  @default(PENDING)
+  topCandidateIds   String[]
+  scoringBreakdown  Json
+  hardFilterReasons Json
+  generationError   String?
+  generatedAt       DateTime?
+  tripProfile       TripProfile           @relation(fields: [tripProfileId], references: [id], onDelete: Cascade)
+  order             Order?                @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  selectedDestination Destination?        @relation(fields: [selectedDestinationId], references: [id], onDelete: SetNull)
+  generatedItinerary GeneratedItinerary?
+  revealTokens      RevealToken[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([tripProfileId])
+  @@index([status])
+}
+
+model Order {
+  id                        String          @id @default(cuid())
+  tripProfileId             String
+  serviceTier               ServiceTier
+  status                    OrderStatus     @default(PENDING)
+  currency                  String
+  amountCents               Int
+  paymentProvider           PaymentProvider @default(STRIPE)
+  providerCheckoutSessionId String?         @unique
+  providerPaymentIntentId   String?
+  checkoutUrl               String?
+  paidAt                    DateTime?
+  tripProfile               TripProfile     @relation(fields: [tripProfileId], references: [id], onDelete: Cascade)
+  paymentEvents             PaymentEvent[]
+  recommendation            Recommendation?
+  recommendationJob         RecommendationJob?
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+
+  @@index([tripProfileId])
+  @@index([status])
+}
+
+model RecommendationJob {
+  id          String                  @id @default(cuid())
+  orderId     String                  @unique
+  status      RecommendationJobStatus @default(PENDING)
+  attempts    Int                     @default(0)
+  availableAt DateTime                @default(now())
+  lockedAt    DateTime?
+  lastError   String?
+  completedAt DateTime?
+  order       Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@index([status, availableAt])
+  @@index([lockedAt])
+}
+
+model PaymentEvent {
+  id              String          @id @default(cuid())
+  orderId         String?
+  paymentProvider PaymentProvider @default(STRIPE)
+  providerEventId String          @unique
+  type            String
+  payload         Json
+  processedAt     DateTime?
+  order           Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt       DateTime        @default(now())
+
+  @@index([orderId])
+  @@index([type])
+}
+
+model GeneratedItinerary {
+  id                                String         @id @default(cuid())
+  recommendationId                  String         @unique
+  travelerProfileSummary            String
+  matchExplanation                  String
+  tripTheme                         String
+  itinerary                         Json
+  restaurantAndActivityCategories   String[]
+  packingSuggestions                String[]
+  revealNarrative                   String
+  clues                             String[]
+  budgetGuidance                    String
+  importantNotes                    String[]
+  generatedByModel                  String
+  recommendation                    Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  createdAt                         DateTime       @default(now())
+  updatedAt                         DateTime       @updatedAt
+}
+
+model RevealToken {
+  id               String         @id @default(cuid())
+  recommendationId String
+  tokenHash        String         @unique
+  encryptedToken   String?
+  tokenLastFour    String
+  expiresAt        DateTime?
+  usedAt           DateTime?
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([recommendationId])
+  @@index([expiresAt])
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}

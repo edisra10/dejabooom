@@ -29,10 +29,10 @@ export type PassportAvailability = "yes" | "no" | "not_sure";
 export type SurpriseLevel =
   | "full_surprise"
   | "reveal_country"
-  | "reveal_region"
-  | "show_three_finalists";
+  | "reveal_region";
 
 export interface TripProfileDraft {
+  contactEmail: string;
   departureCity: string;
   departureAirport: string;
   destinationScope: DestinationScope;
