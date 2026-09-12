@@ -46,7 +46,7 @@ const datesTravelersShape = {
     .number()
     .int("Trip duration must be a whole number of days.")
     .min(2, "Choose at least 2 days.")
-    .max(30, "Keep the trip at 30 days or fewer."),
+    .max(5, "The launch service supports trips of up to 5 days."),
   travelerCount: z
     .number()
     .int("Traveler count must be a whole number.")

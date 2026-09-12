@@ -37,6 +37,7 @@ Copy `.env.example` to `.env.local` and replace placeholder values.
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Public app URL for metadata, checkout redirects, emails, and reveal links. |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Public, monitored support address shown to customers. |
 | `DATABASE_URL` | PostgreSQL connection string for Prisma. |
 | `OPENAI_API_KEY` | Server-side OpenAI API key. Never expose to the client. |
 | `OPENAI_RECOMMENDATION_MODEL` | Recommendation personalization model. Defaults to `gpt-5-mini`. |
@@ -46,8 +47,6 @@ Copy `.env.example` to `.env.local` and replace placeholder values.
 | `PLANNING_SERVICE_CURRENCY` | Currency used by planning-service products. |
 | `AI_SURPRISE_TRIP_NAME` | Display name for the first service tier. |
 | `AI_SURPRISE_TRIP_PRICE_CENTS` | Hosted checkout amount in cents for AI Surprise Trip. |
-| `CONCIERGE_SURPRISE_TRIP_NAME` | Display name for the concierge service tier. |
-| `CONCIERGE_SURPRISE_TRIP_PRICE_CENTS` | Hosted checkout amount in cents for Concierge Surprise Trip. |
 | `RESEND_API_KEY` | Resend API key for transactional email. |
 | `EMAIL_FROM` | Verified sender address for transactional email. |
 | `ADMIN_ALERT_EMAIL` | Operator email for generation-error alerts. |
@@ -72,8 +71,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 3. The questionnaire is validated with Zod and persisted to PostgreSQL.
 4. The deterministic server-side engine applies hard filters and scores the
    curated destination catalog.
-5. The customer selects either `AI Surprise Trip` or `Concierge Surprise Trip`.
-6. Stripe creates a hosted checkout session. Dejabooom never captures raw card
+5. A destination must pass the hard filters before the AI service can be purchased.
+6. The customer selects `AI Surprise Trip` and Stripe creates a hosted checkout
+   session. Dejabooom never captures raw card
    details or CVV.
 7. Stripe webhooks are signature-validated and idempotent.
 8. Verified payments enqueue a durable PostgreSQL recommendation job.
@@ -131,7 +131,8 @@ availability data.
 - Create hosted checkout access with a Stripe secret key.
 - Configure the webhook endpoint: `/api/webhooks/stripe`.
 - Subscribe to `checkout.session.completed`,
-  `checkout.session.expired`, and `checkout.session.async_payment_failed`.
+  `checkout.session.async_payment_succeeded`, `checkout.session.expired`, and
+  `checkout.session.async_payment_failed`.
 - Copy the webhook signing secret to `STRIPE_WEBHOOK_SECRET`.
 - Keep planning-service prices in environment variables.
 
@@ -153,6 +154,8 @@ availability data.
 - Verify the sender domain or address.
 - Set `RESEND_API_KEY` and `EMAIL_FROM`.
 - Set `ADMIN_ALERT_EMAIL` for generation-error notifications.
+- Reveal delivery failures keep the recommendation job retryable. The encrypted
+  reveal token is reused so a provider outage does not require a second AI run.
 
 ## Project Structure
 
@@ -200,7 +203,9 @@ GitHub Actions runs the same validation on pull requests and pushes to `main`.
 - `npm run lint` - Run ESLint
 - `npm run typecheck` - Run TypeScript without emitting files
 - `npm run test` - Run Vitest unit tests
-- `npm run audit:prod` - Fail on high or critical production dependency alerts
+- `npm run audit:prod` - Fail on unapproved high or critical runtime dependency
+  alerts; exact Prisma build-tool exceptions are documented in the audit script
+- `npm run validate:release-env` - Validate required staging/production settings without printing secrets
 - `npm run check` - Run all local validation commands
 - `npm run db:generate` - Generate Prisma Client
 - `npm run db:migrate` - Create/apply local development migrations
@@ -224,4 +229,9 @@ GitHub Actions runs the same validation on pull requests and pushes to `main`.
 - No direct flight, hotel, or activity booking.
 - No real-time pricing or availability.
 - Destination data is curated and approximate.
-- Legal pages are draft text and require professional legal review before launch.
+- The launch service supports one AI-selected destination and itineraries of two
+  to five days. Concierge review and customer selection from finalists are not
+  offered in the launch scope.
+
+See [`docs/release-runbook.md`](docs/release-runbook.md) for the staging journey,
+failure cases, production gate, and evidence to record before launch.

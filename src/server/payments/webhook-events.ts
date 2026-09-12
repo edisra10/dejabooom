@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 
 export const handledStripeEventTypes = new Set([
   "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
   "checkout.session.expired",
   "checkout.session.async_payment_failed",
 ]);
@@ -31,4 +32,3 @@ export function getPaymentIntentIdFromCheckoutSession(
     ? session.payment_intent
     : session.payment_intent.id;
 }
-

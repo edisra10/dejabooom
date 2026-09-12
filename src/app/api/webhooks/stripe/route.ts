@@ -59,6 +59,10 @@ async function handleCheckoutCompleted(
       sessionId: session.id,
       paymentStatus: session.payment_status,
     });
+    await prisma.paymentEvent.update({
+      where: { id: paymentEventId },
+      data: { processedAt: new Date() },
+    });
     return;
   }
 
@@ -193,7 +197,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (event.type === "checkout.session.completed") {
+    if (
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
+    ) {
       await handleCheckoutCompleted(session, paymentEvent.id);
     } else {
       await handleCheckoutNotPaid(session, paymentEvent.id);

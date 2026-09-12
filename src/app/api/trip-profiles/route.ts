@@ -53,13 +53,40 @@ export async function POST(request: Request) {
     },
   });
 
+  let scoringResult;
+
   try {
-    await scoreAndPersistTripProfile(tripProfile.id);
+    scoringResult = await scoreAndPersistTripProfile(tripProfile.id);
   } catch (error) {
-    logger.warn("Initial destination scoring skipped or failed.", {
+    logger.error("Initial destination scoring failed.", {
       tripProfileId: tripProfile.id,
       error: error instanceof Error ? error.message : String(error),
     });
+
+    await prisma.travelerGroup.delete({
+      where: { id: tripProfile.travelerGroupId },
+    });
+
+    return NextResponse.json(
+      {
+        error: "We could not check destination availability. Please try again.",
+      },
+      { status: 503 },
+    );
+  }
+
+  if (!scoringResult.selectedDestination) {
+    await prisma.travelerGroup.delete({
+      where: { id: tripProfile.travelerGroupId },
+    });
+
+    return NextResponse.json(
+      {
+        error:
+          "We could not find a destination that fits every constraint. Adjust your budget, flight time, climate, or exclusions and try again.",
+      },
+      { status: 422 },
+    );
   }
 
   await sendQuestionnaireConfirmation(draft.contactEmail, tripProfile.id);

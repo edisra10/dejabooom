@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { trackServerEvent } from "@/server/analytics/events";
 import { prisma } from "@/server/db/prisma";
+import { getSupportEmail } from "@/server/env";
 import {
   generatedItineraryDaySchema,
   type GeneratedItineraryContent,
@@ -55,6 +56,8 @@ function parseItinerary(
 }
 
 function PrivateRevealUnavailable() {
+  const supportEmail = getSupportEmail();
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl rounded-md border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -66,8 +69,11 @@ function PrivateRevealUnavailable() {
           This reveal link is not available.
         </h1>
         <p className="mt-4 leading-7 text-slate-600">
-          The link may be invalid, expired, or not ready yet. Contact Dejabooom
-          support with your order reference if you believe this is an error.
+          The link may be invalid, expired, or not ready yet. Contact {" "}
+          <a className="font-medium text-cyan-700" href={`mailto:${supportEmail}`}>
+            {supportEmail}
+          </a>
+          {" "}with your order reference if you believe this is an error.
         </p>
         <ButtonLink />
       </div>

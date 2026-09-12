@@ -80,5 +80,17 @@ describe("trip profile validation", () => {
     expect(result.success).toBe(true);
     expect(result.errors).toEqual({});
   });
+
+  it("rejects trip durations outside the launch itinerary range", () => {
+    const result = validateTripProfile({
+      ...validDraft,
+      tripDurationDays: 6,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.errors.tripDurationDays).toBe(
+      "The launch service supports trips of up to 5 days.",
+    );
+  });
 });
 

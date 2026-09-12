@@ -248,6 +248,12 @@ export default function AiTripLanding() {
             >
               AI disclaimer
             </Link>
+            <a
+              href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@dejabooom.com"}`}
+              className="hover:text-slate-950"
+            >
+              Support
+            </a>
           </nav>
         </div>
       </footer>

@@ -8,6 +8,7 @@ import {
 describe("Stripe webhook helpers", () => {
   it("accepts only payment lifecycle events handled by the app", () => {
     expect(isHandledStripeEvent("checkout.session.completed")).toBe(true);
+    expect(isHandledStripeEvent("checkout.session.async_payment_succeeded")).toBe(true);
     expect(isHandledStripeEvent("customer.created")).toBe(false);
   });
 
@@ -31,4 +32,3 @@ describe("Stripe webhook helpers", () => {
     ).toBe("pi_123");
   });
 });
-

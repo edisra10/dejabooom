@@ -4,7 +4,7 @@ import type { Destination, TravelerGroup, TripProfile } from "@prisma/client";
 import { getRequiredEnv } from "@/server/env";
 import { logger } from "@/server/logger";
 import {
-  generatedItinerarySchema,
+  getGeneratedItinerarySchema,
   type GeneratedItineraryContent,
 } from "./generated-itinerary-schema";
 
@@ -76,11 +76,12 @@ export async function generateItineraryWithOpenAI({
     apiKey: getRequiredEnv("OPENAI_API_KEY"),
     timeout: Number(process.env.OPENAI_TIMEOUT_MS ?? 30000),
   });
+  const itinerarySchema = getGeneratedItinerarySchema(profile.tripDurationDays);
 
   const response = await client.responses.create({
     model,
     text: {
-      format: zodTextFormat(generatedItinerarySchema, "dejabooom_itinerary"),
+      format: zodTextFormat(itinerarySchema, "dejabooom_itinerary"),
     },
     input: [
       {
@@ -108,7 +109,7 @@ export async function generateItineraryWithOpenAI({
     ],
   });
 
-  const parsed = generatedItinerarySchema.parse(JSON.parse(response.output_text));
+  const parsed = itinerarySchema.parse(JSON.parse(response.output_text));
   logger.info("OpenAI itinerary generated.", {
     model,
     destinationId: destination.id,

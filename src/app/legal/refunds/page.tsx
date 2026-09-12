@@ -7,17 +7,25 @@ export const metadata: Metadata = {
 
 export default function RefundPolicyPage() {
   return (
-    <LegalPage title="Cancellation and Refund Policy" updated="July 24, 2026">
+    <LegalPage title="Cancellation and Refund Policy" updated="September 12, 2026">
       <p>
-        Dejabooom currently sells a planning and personalization service, not
-        refundable travel inventory. Cancellation and refund handling should be
-        defined before public launch and aligned with payment-provider settings.
+        Dejabooom sells a personalized digital planning service. A customer may
+        request cancellation and a full refund before recommendation generation
+        begins. Include the order reference and the email used at checkout in the
+        request. Generation may begin immediately after payment is verified.
       </p>
       <p>
-        If a recommendation cannot be generated after a verified payment,
-        Dejabooom should review the order manually and either complete the
-        service, retry generation, or issue an appropriate refund through the
-        payment provider.
+        If Dejabooom cannot deliver a recommendation after verified payment, the
+        customer may choose another delivery attempt or a full refund of the
+        Dejabooom planning-service fee. Duplicate charges and confirmed billing
+        errors are also eligible for a full refund.
+      </p>
+      <p>
+        Because the result is created for the customer&apos;s individual profile,
+        completed and delivered recommendations are generally non-refundable.
+        This does not limit refunds required by applicable consumer law. Approved
+        refunds are returned to the original payment method; the payment provider
+        and bank determine when the credit appears.
       </p>
       <p>
         Flights, hotels, activities, and other external bookings are governed by

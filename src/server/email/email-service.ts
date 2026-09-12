@@ -34,44 +34,70 @@ async function sendEmail({
   const client = getResendClient();
 
   if (!client || !from || !to) {
-    logger.warn("Transactional email skipped because configuration is missing.", {
+    logger.error("Transactional email could not be sent because configuration is missing.", {
       hasClient: Boolean(client),
       hasFrom: Boolean(from),
       hasTo: Boolean(to),
       subject,
     });
-    return;
+    throw new Error("Transactional email is not configured.");
   }
 
-  await client.emails.send({
+  const { error } = await client.emails.send({
     from,
     to,
     subject,
     text,
   });
+
+  if (error) {
+    throw new Error(`Transactional email provider rejected the message: ${error.message}`);
+  }
+}
+
+async function sendBestEffortEmail(
+  operation: () => Promise<void>,
+  context: Record<string, unknown>,
+) {
+  try {
+    await operation();
+  } catch (error) {
+    logger.error("Non-critical transactional email failed.", {
+      ...context,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 export async function sendQuestionnaireConfirmation(
   to: string,
   profileId: string,
 ) {
-  await sendEmail({
-    to,
-    ...questionnaireConfirmationTemplate({
-      appUrl: getPublicAppUrl(),
-      profileId,
-    }),
-  });
+  await sendBestEffortEmail(
+    () =>
+      sendEmail({
+        to,
+        ...questionnaireConfirmationTemplate({
+          appUrl: getPublicAppUrl(),
+          profileId,
+        }),
+      }),
+    { emailType: "questionnaire_confirmation", profileId },
+  );
 }
 
 export async function sendPaymentConfirmation(to: string, orderId: string) {
-  await sendEmail({
-    to,
-    ...paymentConfirmationTemplate({
-      appUrl: getPublicAppUrl(),
-      orderId,
-    }),
-  });
+  await sendBestEffortEmail(
+    () =>
+      sendEmail({
+        to,
+        ...paymentConfirmationTemplate({
+          appUrl: getPublicAppUrl(),
+          orderId,
+        }),
+      }),
+    { emailType: "payment_confirmation", orderId },
+  );
 }
 
 export async function sendRevealReadyEmail(to: string, revealUrl: string) {
@@ -85,13 +111,16 @@ export async function sendRevealReadyEmail(to: string, revealUrl: string) {
 }
 
 export async function sendGenerationErrorAlert(orderId: string, error: unknown) {
-  await sendEmail({
-    to: getOptionalEnv("ADMIN_ALERT_EMAIL"),
-    ...generationErrorTemplate({
-      appUrl: getPublicAppUrl(),
-      orderId,
-      errorMessage: error instanceof Error ? error.message : String(error),
-    }),
-  });
+  await sendBestEffortEmail(
+    () =>
+      sendEmail({
+        to: getOptionalEnv("ADMIN_ALERT_EMAIL"),
+        ...generationErrorTemplate({
+          appUrl: getPublicAppUrl(),
+          orderId,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        }),
+      }),
+    { emailType: "generation_error", orderId },
+  );
 }
-

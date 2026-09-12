@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, Recommendation } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { getPublicAppUrl } from "@/server/env";
 import {
@@ -9,6 +9,7 @@ import { logger } from "@/server/logger";
 import {
   createRevealToken,
   encryptRevealToken,
+  decryptRevealToken,
   getRevealTokenLastFour,
   hashRevealToken,
 } from "@/server/security/reveal-token";
@@ -28,7 +29,15 @@ export async function generateRecommendationForOrder(orderId: string) {
           travelerGroup: true,
         },
       },
-      recommendation: true,
+      recommendation: {
+        include: {
+          generatedItinerary: true,
+          revealTokens: {
+            take: 1,
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      },
     },
   });
 
@@ -48,9 +57,36 @@ export async function generateRecommendationForOrder(orderId: string) {
     return order.recommendation;
   }
 
-  let recommendation = order.recommendation;
+  let recommendation: Recommendation | null = order.recommendation;
 
   try {
+    const storedRevealToken = order.recommendation?.revealTokens[0];
+
+    if (
+      order.recommendation?.generatedItinerary &&
+      recommendation &&
+      storedRevealToken?.encryptedToken &&
+      (!storedRevealToken.expiresAt || storedRevealToken.expiresAt > new Date())
+    ) {
+      const existingToken = decryptRevealToken(storedRevealToken.encryptedToken);
+
+      if (existingToken) {
+        await sendRevealReadyEmail(
+          order.tripProfile.contactEmail,
+          `${getPublicAppUrl()}/reveal/${existingToken}`,
+        );
+
+        return prisma.recommendation.update({
+          where: { id: recommendation.id },
+          data: {
+            status: "GENERATED",
+            generatedAt: new Date(),
+            generationError: null,
+          },
+        });
+      }
+    }
+
     const scoringResult = await scoreAndPersistTripProfile(order.tripProfileId);
     const selected = scoringResult.selectedDestination;
 
@@ -112,6 +148,11 @@ export async function generateRecommendationForOrder(orderId: string) {
 
     const token = createRevealToken();
     const revealUrl = `${getPublicAppUrl()}/reveal/${token}`;
+    const encryptedToken = encryptRevealToken(token);
+
+    if (!encryptedToken) {
+      throw new Error("Reveal token encryption is not configured.");
+    }
 
     await prisma.$transaction([
       prisma.generatedItinerary.upsert({
@@ -150,7 +191,7 @@ export async function generateRecommendationForOrder(orderId: string) {
         data: {
           recommendationId: recommendation.id,
           tokenHash: hashRevealToken(token),
-          encryptedToken: encryptRevealToken(token),
+          encryptedToken,
           tokenLastFour: getRevealTokenLastFour(token),
           expiresAt: process.env.REVEAL_TOKEN_TTL_DAYS
             ? new Date(
@@ -160,23 +201,23 @@ export async function generateRecommendationForOrder(orderId: string) {
             : null,
         },
       }),
-      prisma.recommendation.update({
-        where: { id: recommendation.id },
-        data: {
-          status: "GENERATED",
-          generatedAt: new Date(),
-          generationError: null,
-        },
-      }),
     ]);
 
     await sendRevealReadyEmail(order.tripProfile.contactEmail, revealUrl);
+    const deliveredRecommendation = await prisma.recommendation.update({
+      where: { id: recommendation.id },
+      data: {
+        status: "GENERATED",
+        generatedAt: new Date(),
+        generationError: null,
+      },
+    });
     logger.info("Recommendation generated after verified payment.", {
       orderId,
       recommendationId: recommendation.id,
     });
 
-    return recommendation;
+    return deliveredRecommendation;
   } catch (error) {
     logger.error("Recommendation generation failed.", {
       orderId,

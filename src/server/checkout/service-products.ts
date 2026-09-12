@@ -37,19 +37,6 @@ export function getServiceProducts(): ServiceProduct[] {
         "Surprise reveal link",
       ],
     },
-    {
-      tier: "CONCIERGE_SURPRISE_TRIP",
-      name: process.env.CONCIERGE_SURPRISE_TRIP_NAME ?? "Concierge Surprise Trip",
-      description:
-        "Everything in AI Surprise Trip plus operator review and concierge-style refinement.",
-      amountCents: parseAmount("CONCIERGE_SURPRISE_TRIP_PRICE_CENTS"),
-      currency,
-      features: [
-        "AI-personalized itinerary",
-        "Operator review queue",
-        "Reveal-ready email",
-      ],
-    },
   ];
 }
 
@@ -67,4 +54,3 @@ export function formatServicePrice(product: ServiceProduct) {
     currency: product.currency.toUpperCase(),
   }).format(product.amountCents / 100);
 }
-

@@ -61,7 +61,7 @@ export function DatesTravelersStep({
           label="Trip duration in days"
           value={draft.tripDurationDays}
           min={2}
-          max={30}
+          max={5}
           error={errors.tripDurationDays}
           onChange={(value) => updateField("tripDurationDays", value)}
         />

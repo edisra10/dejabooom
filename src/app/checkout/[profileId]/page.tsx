@@ -12,10 +12,13 @@ export const dynamic = "force-dynamic";
 
 export default async function CheckoutSelectionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ profileId: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { profileId } = await params;
+  const { error } = await searchParams;
   const tripProfile = await prisma.tripProfile.findUnique({
     where: { id: profileId },
     include: { travelerGroup: true },
@@ -26,6 +29,18 @@ export default async function CheckoutSelectionPage({
   }
 
   const products = getServiceProducts();
+  const errorMessage =
+    error === "no-match"
+      ? "Your current constraints no longer match an available destination. Update your trip profile before paying."
+      : error === "pricing"
+        ? "This planning service is temporarily unavailable while pricing is configured."
+        : error === "eligibility"
+          ? "We could not recheck destination availability. Please try again in a moment."
+          : error === "provider"
+            ? "Hosted checkout is temporarily unavailable. No payment was taken. Please try again."
+            : error === "rate-limit"
+              ? "Too many checkout attempts were made. Wait one minute and try again."
+            : null;
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
@@ -47,7 +62,16 @@ export default async function CheckoutSelectionPage({
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
+        {errorMessage ? (
+          <div
+            role="alert"
+            className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+          >
+            {errorMessage}
+          </div>
+        ) : null}
+
+        <div className="mt-8 grid gap-4">
           {products.map((product) => {
             const canCheckout = Boolean(product.amountCents);
 
@@ -90,4 +114,3 @@ export default async function CheckoutSelectionPage({
     </main>
   );
 }
-

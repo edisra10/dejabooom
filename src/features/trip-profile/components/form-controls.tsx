@@ -222,7 +222,7 @@ interface ChoiceGroupProps<TValue extends string> {
   value: TValue;
   options: TripProfileOption<TValue>[];
   error?: string;
-  columns?: "two" | "four";
+  columns?: "two" | "three" | "four";
   onChange: (value: TValue) => void;
 }
 
@@ -243,7 +243,11 @@ export function ChoiceGroup<TValue extends string>({
       <div
         className={cn(
           "grid gap-3",
-          columns === "four" ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2",
+          columns === "four"
+            ? "sm:grid-cols-2 lg:grid-cols-4"
+            : columns === "three"
+              ? "sm:grid-cols-3"
+              : "sm:grid-cols-2",
         )}
       >
         {options.map((option) => {

@@ -20,6 +20,10 @@ export function getPublicAppUrl() {
   ).replace(/\/$/, "");
 }
 
+export function getSupportEmail() {
+  return process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@dejabooom.com";
+}
+
 export function getBooleanEnv(name: string, fallback = false) {
   const value = process.env[name];
 
@@ -29,4 +33,3 @@ export function getBooleanEnv(name: string, fallback = false) {
 
   return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
-

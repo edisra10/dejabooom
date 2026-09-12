@@ -176,9 +176,7 @@ export function mapTripProfileDraftToDb(draft: TripProfileDraft) {
         ? "FULL_SURPRISE"
         : draft.surpriseLevel === "reveal_country"
           ? "REVEAL_COUNTRY"
-          : draft.surpriseLevel === "reveal_region"
-            ? "REVEAL_REGION"
-            : "SHOW_THREE_FINALISTS",
+          : "REVEAL_REGION",
   } satisfies Omit<
     TripProfile,
     | "id"
@@ -254,4 +252,3 @@ export function mapDestinationToScoring(
     },
   };
 }
-

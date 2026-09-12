@@ -9,7 +9,7 @@ export default function AiTravelDisclaimerPage() {
   return (
     <LegalPage
       title="AI and Travel Information Disclaimer"
-      updated="July 24, 2026"
+      updated="September 12, 2026"
     >
       <p>
         Dejabooom uses deterministic filtering and scoring to select from a
